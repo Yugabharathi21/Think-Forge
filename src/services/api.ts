@@ -30,7 +30,7 @@ export const authService = {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    return response.data;
+    return response;
   },
   
   login: async (email: string, password: string) => {
@@ -39,7 +39,7 @@ export const authService = {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    return response.data;
+    return response;
   },
   
   logout: () => {

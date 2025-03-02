@@ -41,7 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAuthStatus = async () => {
     try {
       const response = await authService.getCurrentUser();
-      setUser(response.data);
+      if (response.data.success) {
+        setUser(response.data.user);
+      } else {
+        throw new Error('Failed to get user data');
+      }
     } catch (error) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -52,8 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const { token, user } = await authService.login(email, password);
-      setUser(user);
+      const response = await authService.login(email, password);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Login failed');
+      }
+      setUser(response.data.user);
     } catch (error) {
       throw error;
     }
@@ -61,8 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const { token, user } = await authService.register(username, email, password);
-      setUser(user);
+      const response = await authService.register(username, email, password);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Registration failed');
+      }
+      setUser(response.data.user);
     } catch (error) {
       throw error;
     }

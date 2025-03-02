@@ -24,41 +24,49 @@ const Register: React.FC = () => {
 
   const validateForm = () => {
     const newErrors: FieldError = {};
-    
-    if (!username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters long';
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
-      newErrors.email = 'Invalid email address';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters long';
-    }
 
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long';
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter';
+    }
+
+    if (!/[a-z]/.test(password)) {
+      newErrors.password = 'Password must contain at least one lowercase letter';
+    }
+
+    if (!/[0-9]/.test(password)) {
+      newErrors.password = 'Password must contain at least one number';
+    }
+
+    if (!/[!@#$%^&*]/.test(password)) {
+      newErrors.password = 'Password must contain at least one special character (!@#$%^&*)';
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      newErrors.username = 'Username can only contain letters, numbers, and underscores';
+    }
+
+    return newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
+    
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
+      setErrors({});
       setLoading(true);
       await register(username, email, password);
       navigation.toHome({ replace: true });
@@ -71,10 +79,10 @@ const Register: React.FC = () => {
         } else if (field) {
           setErrors({ [field]: message });
         } else {
-          setErrors({ general: message });
+          setErrors({ general: message || 'Failed to create account' });
         }
       } else {
-        setErrors({ general: 'Failed to create an account. Please try again.' });
+        setErrors({ general: err.message || 'Failed to create account' });
       }
     } finally {
       setLoading(false);
@@ -93,12 +101,12 @@ const Register: React.FC = () => {
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
-          Or{' '}
+          Already have an account?{' '}
           <Link
             to="/login"
             className="font-medium text-primary hover:text-primary-light"
           >
-            sign in to your account
+            Sign in
           </Link>
         </p>
       </div>
@@ -110,7 +118,7 @@ const Register: React.FC = () => {
               {errors.general}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-300">
@@ -183,7 +191,7 @@ const Register: React.FC = () => {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
-                Confirm Password
+                Confirm password
               </label>
               <div className="mt-1">
                 <input

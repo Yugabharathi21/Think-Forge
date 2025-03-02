@@ -4,10 +4,16 @@ import { BrainCircuit } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../hooks/useNavigation';
 
+interface FieldError {
+  email?: string;
+  password?: string;
+  general?: string;
+}
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<FieldError>({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigation = useNavigation();
@@ -15,13 +21,24 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setError('');
+      setErrors({});
       setLoading(true);
       await login(email, password);
       navigation.toHome({ replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Failed to sign in');
+      if (err.response?.data) {
+        const { message, field, details } = err.response.data;
+        if (details) {
+          setErrors(details);
+        } else if (field) {
+          setErrors({ [field]: message });
+        } else {
+          setErrors({ general: message || 'Failed to sign in' });
+        }
+      } else {
+        setErrors({ general: err.message || 'Failed to sign in' });
+      }
     } finally {
       setLoading(false);
     }
@@ -51,9 +68,9 @@ const Login: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-dark-lighter py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
+          {errors.general && (
             <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-md">
-              {error}
+              {errors.general}
             </div>
           )}
 
@@ -71,8 +88,13 @@ const Login: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-md border border-white/10 bg-dark-darker px-3 py-2 placeholder-gray-400 shadow-sm focus:border-primary focus:outline-none focus:ring-primary sm:text-sm text-white"
+                  className={`block w-full appearance-none rounded-md border ${
+                    errors.email ? 'border-red-500' : 'border-white/10'
+                  } bg-dark-darker px-3 py-2 placeholder-gray-400 shadow-sm focus:border-primary focus:outline-none focus:ring-primary sm:text-sm text-white`}
                 />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+                )}
               </div>
             </div>
 
@@ -89,8 +111,13 @@ const Login: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-md border border-white/10 bg-dark-darker px-3 py-2 placeholder-gray-400 shadow-sm focus:border-primary focus:outline-none focus:ring-primary sm:text-sm text-white"
+                  className={`block w-full appearance-none rounded-md border ${
+                    errors.password ? 'border-red-500' : 'border-white/10'
+                  } bg-dark-darker px-3 py-2 placeholder-gray-400 shadow-sm focus:border-primary focus:outline-none focus:ring-primary sm:text-sm text-white`}
                 />
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-400">{errors.password}</p>
+                )}
               </div>
             </div>
 
