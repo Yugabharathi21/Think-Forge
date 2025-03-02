@@ -3,6 +3,7 @@ export interface Message {
   content: string;
   role: 'user' | 'assistant' | 'system';
   timestamp: Date;
+  conversation?: string;
 }
 
 export interface Conversation {
@@ -11,4 +12,12 @@ export interface Conversation {
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
+  user?: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
 }

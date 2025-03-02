@@ -1,80 +1,118 @@
-# Think-Forge
+# ThinkForge Chat Application
 
-Welcome to Think-Forge! This project aims to revolutionize the way we think and create. Below you will find all the necessary information to get started with the project.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
-
-## Introduction
-
-Think-Forge is a cutting-edge platform designed to enhance creativity and productivity. It provides a suite of tools and resources to help you brainstorm, organize, and execute your ideas efficiently.
+A modern, sleek chat interface with AI capabilities, built with the MERN stack (MongoDB, Express, React, Node.js).
 
 ## Features
 
-- **Brainstorming Tools**: Generate and organize ideas effortlessly.
-- **Project Management**: Track progress and manage tasks.
-- **Collaboration**: Work with team members in real-time.
-- **Integration**: Seamlessly integrate with other productivity tools.
+- Modern UI inspired by ChatGPT
+- Real-time chat with AI responses
+- User authentication and authorization
+- Conversation management
+- Markdown support for rich text formatting
+- Code syntax highlighting
+- Mobile-responsive design
 
-## Installation
+## Tech Stack
 
-To install Think-Forge, follow these steps:
+### Frontend
+- React with TypeScript
+- Vite for fast development
+- Tailwind CSS for styling
+- React Markdown for rendering markdown
+- Syntax highlighting for code blocks
+- Lucide React for icons
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/yourusername/think-forge.git
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd think-forge
-    ```
-3. Install dependencies:
-    ```bash
-    npm install
-    ```
+### Backend
+- Node.js with Express
+- MongoDB with Mongoose
+- JWT for authentication
+- RESTful API architecture
 
-## Usage
+## Getting Started
 
-To start using Think-Forge, run the following command:
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB (local or Atlas)
 
-```bash
-npm start
+### Installation
+
+1. Clone the repository
+```
+git clone <repository-url>
+cd thinkforge
 ```
 
-Open your browser and navigate to `http://localhost:3000` to access the application.
+2. Install dependencies
+```
+npm install
+```
 
-## Contributing
+3. Set up environment variables
+Create a `.env` file in the backend directory with the following variables:
+```
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/thinkforge
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
+```
 
-We welcome contributions from the community! To contribute, please follow these steps:
+4. Start the development server
+```
+# Start the backend server
+npm run server
 
-1. Fork the repository.
-2. Create a new branch:
-    ```bash
-    git checkout -b feature-name
-    ```
-3. Make your changes and commit them:
-    ```bash
-    git commit -m "Add new feature"
-    ```
-4. Push to the branch:
-    ```bash
-    git push origin feature-name
-    ```
-5. Open a pull request.
+# In a separate terminal, start the frontend
+npm run dev
+```
 
-## License
+## Project Structure
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+```
+thinkforge/
+├── backend/               # Backend code
+│   ├── controllers/       # Request handlers
+│   ├── middleware/        # Express middleware
+│   ├── models/            # Mongoose models
+│   ├── routes/            # API routes
+│   ├── utils/             # Utility functions
+│   └── server.js          # Entry point
+├── public/                # Static files
+├── src/                   # Frontend code
+│   ├── components/        # React components
+│   ├── services/          # API services
+│   ├── types/             # TypeScript types
+│   ├── utils/             # Utility functions
+│   ├── App.tsx            # Main component
+│   └── main.tsx           # Entry point
+├── .env                   # Environment variables
+└── package.json           # Project dependencies
+```
 
-## Contact
+## API Endpoints
 
-For any questions or feedback, please reach out to us , Discord sodaputtiplayz21 , insta _x_spz_x_.
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user
 
-Thank you for using Think-Forge!
+### Conversations
+- `GET /api/conversations` - Get all conversations
+- `GET /api/conversations/:id` - Get a single conversation
+- `POST /api/conversations` - Create a new conversation
+- `PUT /api/conversations/:id` - Update a conversation
+- `DELETE /api/conversations/:id` - Delete a conversation
+
+### Messages
+- `GET /api/messages/:conversationId` - Get all messages for a conversation
+- `POST /api/messages/:conversationId` - Create a new message
+- `POST /api/messages/:conversationId/generate` - Generate AI response
+
+## Future Enhancements
+
+- Real AI model integration
+- Real-time updates with Socket.io
+- Voice input and output
+- File uploads and sharing
+- User preferences and settings
+- Advanced conversation management
+- Export conversations
