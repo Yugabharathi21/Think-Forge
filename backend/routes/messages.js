@@ -1,23 +1,22 @@
 import express from 'express';
+import { validate, schemas } from '../middleware/validate.js';
+import { auth } from '../middleware/auth.js';
 import {
   getMessages,
   createMessage,
   generateAIResponse
 } from '../controllers/messageController.js';
-import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Protect all routes
-router.use(protect);
+router.use(auth);
 
-// Get all messages for a conversation
-router.get('/:conversationId', getMessages);
+// Routes
+router.route('/:conversationId')
+  .get(getMessages)
+  .post(validate(schemas.messageCreate), createMessage);
 
-// Create a new message
-router.post('/:conversationId', createMessage);
-
-// Generate AI response
-router.post('/:conversationId/generate', generateAIResponse);
+router.post('/:conversationId/generate', validate(schemas.messageCreate), generateAIResponse);
 
 export default router;

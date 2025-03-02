@@ -1,9 +1,11 @@
-class AppError extends Error {
-  constructor(message, statusCode) {
+// Custom error class for application errors
+export class AppError extends Error {
+  constructor(message, statusCode, extras = {}) {
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
     this.isOperational = true;
+    this.extras = extras;
 
     Error.captureStackTrace(this, this.constructor);
   }
@@ -32,54 +34,41 @@ const handleJWTError = () =>
 const handleJWTExpiredError = () =>
   new AppError('Your token has expired! Please log in again.', 401);
 
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack
-  });
-};
-
-const sendErrorProd = (err, res) => {
-  // Operational, trusted error: send message to client
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message
-    });
-  } 
-  // Programming or other unknown error: don't leak error details
-  else {
-    // Log error for debugging
-    console.error('ERROR 💥', err);
-
-    // Send generic message
-    res.status(500).json({
-      status: 'error',
-      message: 'Something went wrong!'
-    });
-  }
-};
-
-const errorHandler = (err, req, res, next) => {
+// Global error handling middleware
+export const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
+  // Development error response
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, res);
-  } else {
-    let error = { ...err };
-    error.message = err.message;
-
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-    if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
-    if (error.name === 'JsonWebTokenError') error = handleJWTError();
-    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
-
-    sendErrorProd(error, res);
+    res.status(err.statusCode).json({
+      success: false,
+      status: err.status,
+      message: err.message,
+      ...err.extras,
+      stack: err.stack,
+      error: err
+    });
+  } 
+  // Production error response
+  else {
+    // Operational, trusted error: send message to client
+    if (err.isOperational) {
+      res.status(err.statusCode).json({
+        success: false,
+        status: err.status,
+        message: err.message,
+        ...err.extras
+      });
+    }
+    // Programming or other unknown error: don't leak error details
+    else {
+      console.error('ERROR 💥', err);
+      res.status(500).json({
+        success: false,
+        status: 'error',
+        message: 'Something went wrong!'
+      });
+    }
   }
-};
-
-export { AppError, errorHandler }; 
+}; 

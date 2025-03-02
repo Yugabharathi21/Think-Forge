@@ -12,6 +12,7 @@ import compression from 'compression';
 import { errorHandler } from './utils/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import conversationRoutes from './routes/conversations.js';
+import messageRoutes from './routes/messages.js';
 
 // Load environment variables
 dotenv.config();
@@ -55,6 +56,7 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

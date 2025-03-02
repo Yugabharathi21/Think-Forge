@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { AppError } from '../utils/errorHandler.js';
 
-const validate = (schema) => {
+export const validate = (schema) => {
   return (req, res, next) => {
     const { error } = schema.validate(req.body, {
       abortEarly: false,
@@ -10,10 +10,13 @@ const validate = (schema) => {
     });
 
     if (error) {
-      const errorMessage = error.details
-        .map((detail) => detail.message)
-        .join(', ');
-      return next(new AppError(errorMessage, 400));
+      const details = error.details.reduce((acc, detail) => {
+        const key = detail.path[0];
+        acc[key] = detail.message.replace(/['"]/g, '');
+        return acc;
+      }, {});
+
+      return next(new AppError('Validation failed', 400, { details }));
     }
 
     next();
@@ -21,7 +24,7 @@ const validate = (schema) => {
 };
 
 // Validation schemas
-const schemas = {
+export const schemas = {
   // User schemas
   userRegister: Joi.object({
     username: Joi.string()
@@ -43,12 +46,12 @@ const schemas = {
         'any.required': 'Email is required'
       }),
     password: Joi.string()
-      .min(6)
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .min(8)
+      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/)
       .required()
       .messages({
-        'string.min': 'Password must be at least 6 characters long',
-        'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+        'string.min': 'Password must be at least 8 characters long',
+        'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (!@#$%^&*)',
         'any.required': 'Password is required'
       })
   }),
@@ -65,6 +68,23 @@ const schemas = {
       .required()
       .messages({
         'any.required': 'Password is required'
+      })
+  }),
+
+  userPreferences: Joi.object({
+    theme: Joi.string()
+      .valid('light', 'dark')
+      .messages({
+        'any.only': 'Theme must be either light or dark'
+      }),
+    notifications: Joi.object({
+      email: Joi.boolean(),
+      push: Joi.boolean()
+    }),
+    language: Joi.string()
+      .pattern(/^[a-z]{2}(-[A-Z]{2})?$/)
+      .messages({
+        'string.pattern.base': 'Language must be in format: en or en-US'
       })
   }),
 
@@ -131,15 +151,13 @@ const schemas = {
         'any.required': 'Reset token is required'
       }),
     newPassword: Joi.string()
-      .min(6)
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .min(8)
+      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/)
       .required()
       .messages({
-        'string.min': 'New password must be at least 6 characters long',
-        'string.pattern.base': 'New password must contain at least one uppercase letter, one lowercase letter, and one number',
+        'string.min': 'New password must be at least 8 characters long',
+        'string.pattern.base': 'New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (!@#$%^&*)',
         'any.required': 'New password is required'
       })
   })
-};
-
-export { validate, schemas }; 
+}; 

@@ -1,25 +1,18 @@
-import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
-// Generate JWT token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d'
-  });
-};
+import { AppError } from '../utils/errorHandler.js';
 
 // Register a new user
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
     if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this email or username already exists'
-      });
+      if (userExists.email === email) {
+        return next(new AppError('Email already in use', 400, { field: 'email' }));
+      }
+      return next(new AppError('Username already taken', 400, { field: 'username' }));
     }
 
     // Create new user
@@ -29,92 +22,123 @@ export const register = async (req, res) => {
       password
     });
 
-    // Generate token
-    const token = generateToken(user._id);
+    // Generate token using the model method
+    const token = user.generateAuthToken();
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
 
     res.status(201).json({
       success: true,
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        preferences: user.preferences
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error registering user',
-      error: error.message
-    });
+    next(error);
   }
 };
 
 // Login user
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists
+    // Check if user exists and get password
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      return next(new AppError('Invalid credentials', 401, { field: 'email' }));
+    }
+
+    // Check if user is active
+    if (user.status !== 'active') {
+      return next(new AppError('Your account is not active', 401));
     }
 
     // Check if password matches
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      return next(new AppError('Invalid credentials', 401, { field: 'password' }));
     }
 
-    // Generate token
-    const token = generateToken(user._id);
+    // Generate token using the model method
+    const token = user.generateAuthToken();
 
-    res.status(200).json({
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    res.json({
       success: true,
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        preferences: user.preferences
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error logging in',
-      error: error.message
-    });
+    next(error);
   }
 };
 
 // Get current user
-export const getCurrentUser = async (req, res) => {
+export const getCurrentUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
 
-    res.status(200).json({
+    res.json({
       success: true,
       user: {
-        id: user._id,
+        _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        preferences: user.preferences
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error getting user',
-      error: error.message
+    next(error);
+  }
+};
+
+// Update user preferences
+export const updatePreferences = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return next(new AppError('User not found', 404));
+    }
+
+    user.preferences = {
+      ...user.preferences,
+      ...req.body
+    };
+
+    await user.save();
+
+    res.json({
+      success: true,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        preferences: user.preferences
+      }
     });
+  } catch (error) {
+    next(error);
   }
 };
