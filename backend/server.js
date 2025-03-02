@@ -1,15 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-import mongoose from 'mongoose';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-// Import routes
 import authRoutes from './routes/auth.js';
 import conversationRoutes from './routes/conversations.js';
-import messageRoutes from './routes/messages.js';
 
 // Load environment variables
 dotenv.config();
@@ -23,15 +18,15 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/thinkforge')
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes);
-app.use('/api/messages', messageRoutes);
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -41,14 +36,10 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'An error occurred on the server',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+  res.status(500).json({ message: 'Something went wrong!' });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

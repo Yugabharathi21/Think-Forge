@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BrainCircuit } from 'lucide-react';
-import { authService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -9,28 +9,26 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
+      return setError('Passwords do not match');
     }
 
-    setIsLoading(true);
-
     try {
-      await authService.register(username, email, password);
+      setError('');
+      setLoading(true);
+      await register(username, email, password);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register. Please try again.');
+    } catch (err) {
+      setError('Failed to create an account. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -137,10 +135,10 @@ const Register: React.FC = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className="flex w-full justify-center rounded-md border border-transparent bg-primary py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Creating account...' : 'Create account'}
+                {loading ? 'Creating account...' : 'Create account'}
               </button>
             </div>
           </form>

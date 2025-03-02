@@ -2,46 +2,28 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 // Middleware to protect routes
-export const protect = async (req, res, next) => {
-  let token;
-
-  // Check if token exists in headers
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  // Check if token exists
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized to access this route'
-    });
-  }
-
+const auth = (req, res, next) => {
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
 
-    // Get user from database
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    // Add user to request object
-    req.user = user;
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Add user to request
+    req.user = decoded;
+    
     next();
   } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized to access this route'
-    });
+    res.status(401).json({ message: 'Token is not valid' });
   }
 };
+
+export default auth;
 
 // Middleware to restrict access to admin
 export const restrictTo = (...roles) => {

@@ -1,25 +1,40 @@
 import mongoose from 'mongoose';
 
-const conversationSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: [true, 'Conversation title is required'],
-    trim: true
+const messageSchema = new mongoose.Schema(
+  {
+    content: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'assistant'],
+      required: true,
+    },
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'User ID is required']
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  {
+    timestamps: true,
   }
-});
+);
+
+const conversationSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    messages: [messageSchema],
+  },
+  {
+    timestamps: true,
+  }
+);
 
 // Update the updatedAt field before saving
 conversationSchema.pre('save', function(next) {

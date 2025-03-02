@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Sidebar from '../components/Sidebar';
 import ChatHeader from '../components/ChatHeader';
 import ChatMessage from '../components/ChatMessage';
@@ -7,17 +12,17 @@ import ChatInput from '../components/ChatInput';
 import EmptyState from '../components/EmptyState';
 import { conversationService, messageService } from '../services/api';
 import { Conversation, Message } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 
 const Chat: React.FC = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Scroll to bottom whenever messages change or when loading state changes
   const scrollToBottom = () => {
@@ -151,6 +156,11 @@ const Chat: React.FC = () => {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   if (isFetching) {
