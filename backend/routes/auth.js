@@ -14,6 +14,7 @@ router.post('/register', async (req, res) => {
     // Validate input
     if (!username || !email || !password) {
       return res.status(400).json({ 
+        success: false,
         message: 'Please provide all required fields',
         details: {
           username: !username ? 'Username is required' : null,
@@ -27,6 +28,7 @@ router.post('/register', async (req, res) => {
     let existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ 
+        success: false,
         message: 'User already exists',
         field: 'email'
       });
@@ -35,6 +37,7 @@ router.post('/register', async (req, res) => {
     existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ 
+        success: false,
         message: 'Username is already taken',
         field: 'username'
       });
@@ -57,6 +60,7 @@ router.post('/register', async (req, res) => {
     );
 
     res.status(201).json({
+      success: true,
       token,
       user: {
         _id: user._id,
@@ -67,6 +71,7 @@ router.post('/register', async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Failed to create account',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -81,6 +86,7 @@ router.post('/login', async (req, res) => {
     // Validate input
     if (!email || !password) {
       return res.status(400).json({ 
+        success: false,
         message: 'Please provide all required fields',
         details: {
           email: !email ? 'Email is required' : null,
@@ -90,9 +96,10 @@ router.post('/login', async (req, res) => {
     }
 
     // Check if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return res.status(400).json({ 
+        success: false,
         message: 'Invalid credentials',
         field: 'email'
       });
@@ -102,6 +109,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ 
+        success: false,
         message: 'Invalid credentials',
         field: 'password'
       });
@@ -115,6 +123,7 @@ router.post('/login', async (req, res) => {
     );
 
     res.json({
+      success: true,
       token,
       user: {
         _id: user._id,
@@ -125,6 +134,7 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Failed to login',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -134,14 +144,19 @@ router.post('/login', async (req, res) => {
 // Get current user
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json(user);
+    const user = req.user;
+    res.json({
+      success: true,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+      }
+    });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Failed to get user information',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
