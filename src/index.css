@@ -10,10 +10,73 @@
   --darker: #181825;
   --light: #f8fafc;
   --accent: #f43f5e;
+  --terminal-black: #1a1a1a;
+  --terminal-white: #f0f0f0;
+  --terminal-gray: #808080;
+  --terminal-font: 'Fira Code', 'Courier New', monospace;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  margin: 0;
+  font-family: var(--terminal-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--terminal-black);
+  color: var(--terminal-white);
+}
+
+.terminal-input {
+  @apply bg-black border border-white/20 text-white font-mono p-2 w-full focus:outline-none focus:border-white/50;
+}
+
+.terminal-button {
+  @apply bg-white text-black font-mono px-4 py-2 hover:bg-gray-200 transition-colors duration-200;
+}
+
+.terminal-link {
+  @apply text-white underline hover:text-gray-300 transition-colors duration-200;
+}
+
+.terminal-card {
+  @apply border border-white/20 bg-black/50 p-4;
+}
+
+.terminal-header {
+  @apply font-mono text-2xl font-bold text-white mb-4;
+}
+
+.terminal-text {
+  @apply font-mono text-white/90;
+}
+
+.terminal-cursor {
+  @apply animate-pulse;
+}
+
+.terminal-window {
+  @apply border border-white/20 bg-black rounded-none;
+}
+
+.terminal-titlebar {
+  @apply bg-white text-black px-4 py-2 font-mono flex items-center justify-between;
+}
+
+.terminal-content {
+  @apply p-4 font-mono;
+}
+
+/* Terminal-style scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--terminal-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--terminal-gray);
+  border: 2px solid var(--terminal-black);
 }
 
 .prose pre {
@@ -90,4 +153,80 @@ body {
   50% {
     opacity: 0.5;
   }
+}
+
+/* Terminal Styles */
+.terminal-container {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+}
+
+.terminal-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-messages::-webkit-scrollbar-track {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.terminal-messages::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 0, 0.3);
+  border-radius: 4px;
+}
+
+.terminal-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 0, 0.4);
+}
+
+.message.system pre {
+  color: #ffd700;
+}
+
+.message.assistant pre {
+  color: #00ff00;
+}
+
+.message.user pre {
+  color: #00ffff;
+}
+
+.terminal-cursor::after {
+  content: '_';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Terminal animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.message {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Terminal input styles */
+.terminal-input-area textarea {
+  background: transparent;
+  caret-color: #00ff00;
+  font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+.terminal-input-area textarea::placeholder {
+  color: rgba(0, 255, 0, 0.3);
+}
+
+/* Terminal header styles */
+.terminal-header {
+  user-select: none;
 }

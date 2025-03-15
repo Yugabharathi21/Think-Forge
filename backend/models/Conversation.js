@@ -74,8 +74,15 @@ const conversationSchema = new mongoose.Schema({
     },
     systemPrompt: {
       type: String,
-      default: 'You are a helpful assistant.'
+      default: 'You are a helpful terminal-based AI assistant.'
     }
+  },
+  lastActivity: {
+    type: Date,
+    default: Date.now,
+  },
+  isArchived: {
+    type: Boolean,
   }
 }, {
   timestamps: true

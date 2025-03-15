@@ -3,23 +3,27 @@ import mongoose from 'mongoose';
 const messageSchema = new mongoose.Schema({
   content: {
     type: String,
-    required: [true, 'Message content is required'],
-    trim: true
+    required: true,
   },
   role: {
     type: String,
     enum: ['user', 'assistant', 'system'],
-    required: [true, 'Message role is required']
+    required: true,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
   conversation: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Conversation',
-    required: [true, 'Conversation ID is required']
+    required: true,
   },
   timestamp: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 const Message = mongoose.model('Message', messageSchema);

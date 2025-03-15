@@ -1,5 +1,8 @@
 import Message from '../models/Message.js';
 import Conversation from '../models/Conversation.js';
+import fetch from 'node-fetch';
+
+const OLLAMA_API_URL = 'http://localhost:11434/api';
 
 // Get all messages for a conversation
 export const getMessages = async (req, res) => {
@@ -60,8 +63,8 @@ export const createMessage = async (req, res) => {
       conversation: conversationId
     });
 
-    // Update conversation's updatedAt
-    await Conversation.findByIdAndUpdate(conversationId, { updatedAt: Date.now() });
+    // Update conversation's lastActivity
+    await Conversation.findByIdAndUpdate(conversationId, { lastActivity: Date.now() });
 
     res.status(201).json({
       success: true,
@@ -76,10 +79,10 @@ export const createMessage = async (req, res) => {
   }
 };
 
-// Generate AI response
-export const generateAIResponse = async (req, res) => {
+// Stream AI response
+export const streamAIResponse = async (req, res) => {
   try {
-    const { userMessage } = req.body;
+    const { content } = req.body;
     const conversationId = req.params.conversationId;
 
     // Check if conversation exists and belongs to user
@@ -95,41 +98,91 @@ export const generateAIResponse = async (req, res) => {
       });
     }
 
+    // Get last 10 messages for context
+    const lastMessages = await Message.find({ conversation: conversationId })
+      .sort({ timestamp: -1 })
+      .limit(10);
+
+    // Format messages for Ollama
+    const context = lastMessages.reverse().map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
     // Save user message
-    const userMessageDoc = await Message.create({
-      content: userMessage,
+    const userMessage = await Message.create({
+      content,
       role: 'user',
       conversation: conversationId
     });
 
-    // Mock AI response (this would be replaced with actual AI integration)
-    let aiResponseContent = "I understand you're asking about something. As ThinkForge, I'm designed to provide thoughtful responses. This is a placeholder response.";
-    
-    // Simple keyword-based responses for demo purposes
-    if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('hi')) {
-      aiResponseContent = "Hello! I'm ThinkForge, your advanced AI assistant. How can I help you today?";
-    } else if (userMessage.toLowerCase().includes('help')) {
-      aiResponseContent = "I'm here to assist you! As ThinkForge, I can help with a wide range of tasks including answering questions, generating creative content, explaining complex topics, and much more. What specific help do you need?";
-    }
+    // Set up SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
-    // Save AI response
+    // Create AI message placeholder
     const aiMessage = await Message.create({
-      content: aiResponseContent,
+      content: '',
       role: 'assistant',
       conversation: conversationId
     });
 
-    // Update conversation's updatedAt
-    await Conversation.findByIdAndUpdate(conversationId, { updatedAt: Date.now() });
+    let fullResponse = '';
 
-    res.status(201).json({
-      success: true,
-      data: {
-        userMessage: userMessageDoc,
-        aiResponse: aiMessage
-      }
+    // Stream response from Ollama
+    const ollamaResponse = await fetch(`${OLLAMA_API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'mistral',
+        messages: [
+          {
+            role: 'system',
+            content: `You are ThinkForge, an advanced AI assistant focused on ${conversation.topic || 'general assistance'}. Be helpful, concise, and accurate.`
+          },
+          ...context,
+          { role: 'user', content }
+        ],
+        stream: true
+      })
     });
+
+    const reader = ollamaResponse.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(Boolean);
+
+        for (const line of lines) {
+          const data = JSON.parse(line);
+          if (data.message?.content) {
+            fullResponse += data.message.content;
+            res.write(`data: ${JSON.stringify({ content: data.message.content })}\n\n`);
+          }
+        }
+      }
+
+      // Update AI message with full response
+      await Message.findByIdAndUpdate(aiMessage._id, { content: fullResponse });
+      
+      // Update conversation's lastActivity
+      await Conversation.findByIdAndUpdate(conversationId, { lastActivity: Date.now() });
+
+      res.write(`data: ${JSON.stringify({ done: true, messageId: aiMessage._id })}\n\n`);
+    } catch (error) {
+      console.error('Streaming error:', error);
+      res.write(`data: ${JSON.stringify({ error: 'Streaming error occurred' })}\n\n`);
+    } finally {
+      res.end();
+    }
   } catch (error) {
+    console.error('Error in streamAIResponse:', error);
     res.status(500).json({
       success: false,
       message: 'Error generating AI response',

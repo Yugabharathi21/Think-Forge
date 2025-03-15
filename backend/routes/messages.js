@@ -4,7 +4,7 @@ import { auth } from '../middleware/auth.js';
 import {
   getMessages,
   createMessage,
-  generateAIResponse
+  streamAIResponse
 } from '../controllers/messageController.js';
 
 const router = express.Router();
@@ -17,6 +17,6 @@ router.route('/:conversationId')
   .get(getMessages)
   .post(validate(schemas.messageCreate), createMessage);
 
-router.post('/:conversationId/generate', validate(schemas.messageCreate), generateAIResponse);
+router.post('/:conversationId/generate', validate(schemas.messageCreate), streamAIResponse);
 
 export default router;
