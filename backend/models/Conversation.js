@@ -1,31 +1,5 @@
 import mongoose from 'mongoose';
 
-const messageSchema = new mongoose.Schema({
-  content: {
-    type: String,
-    required: [true, 'Message content is required'],
-    trim: true,
-    maxlength: [10000, 'Message cannot exceed 10000 characters']
-  },
-  role: {
-    type: String,
-    enum: ['user', 'assistant', 'system'],
-    required: true
-  },
-  metadata: {
-    tokens: {
-      total: Number,
-      completion: Number,
-      prompt: Number
-    },
-    model: String,
-    finishReason: String,
-    processingTime: Number
-  }
-}, {
-  timestamps: true
-});
-
 const conversationSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -39,7 +13,10 @@ const conversationSchema = new mongoose.Schema({
     required: [true, 'User reference is required'],
     index: true
   },
-  messages: [messageSchema],
+  systemPrompt: {
+    type: String,
+    default: 'You are a helpful coding assistant powered by deepseek-coder.'
+  },
   status: {
     type: String,
     enum: ['active', 'archived', 'deleted'],
@@ -48,63 +25,39 @@ const conversationSchema = new mongoose.Schema({
   metadata: {
     model: {
       type: String,
-      default: 'gpt-3.5-turbo'
+      default: 'deepseek-coder:6.7b'
     },
     totalTokens: {
       type: Number,
       default: 0
     },
-    category: String,
-    tags: [String],
-    language: String,
-    lastActivity: Date
-  },
-  settings: {
-    temperature: {
+    messageCount: {
       type: Number,
-      default: 0.7,
-      min: 0,
-      max: 2
+      default: 0
     },
-    maxTokens: {
-      type: Number,
-      default: 2000,
-      min: 1,
-      max: 4000
-    },
-    systemPrompt: {
-      type: String,
-      default: 'You are a helpful terminal-based AI assistant.'
-    }
+    lastMessageAt: Date
   },
   lastActivity: {
     type: Date,
-    default: Date.now,
+    default: Date.now
   },
   isArchived: {
     type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
 });
 
 // Indexes for better query performance
-conversationSchema.index({ user: 1, status: 1, createdAt: -1 });
-conversationSchema.index({ 'metadata.tags': 1 });
+conversationSchema.index({ user: 1, status: 1, lastActivity: -1 });
 conversationSchema.index({ title: 'text' });
 
-// Update lastActivity on new messages
-conversationSchema.pre('save', function(next) {
-  if (this.isModified('messages')) {
-    this.metadata.lastActivity = new Date();
-    
-    // Update total tokens
-    if (this.messages.length > 0) {
-      const lastMessage = this.messages[this.messages.length - 1];
-      if (lastMessage.metadata && lastMessage.metadata.tokens) {
-        this.metadata.totalTokens += lastMessage.metadata.tokens.total || 0;
-      }
-    }
+// Update metadata when conversation is modified
+conversationSchema.pre('save', async function(next) {
+  if (this.isModified('metadata.messageCount')) {
+    this.lastActivity = new Date();
+    this.metadata.lastMessageAt = new Date();
   }
   next();
 });

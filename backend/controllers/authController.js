@@ -1,115 +1,119 @@
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import { AppError } from '../utils/errorHandler.js';
 
-// Register a new user
-export const register = async (req, res, next) => {
+// Generate JWT Token
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || 'your-default-secret', {
+    expiresIn: '30d',
+  });
+};
+
+// @desc    Register new user
+// @route   POST /api/auth/register
+// @access  Public
+export const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if user already exists
-    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    // Check if user exists
+    const userExists = await User.findOne({ email });
     if (userExists) {
-      if (userExists.email === email) {
-        return next(new AppError('Email already in use', 400, { field: 'email' }));
-      }
-      return next(new AppError('Username already taken', 400, { field: 'username' }));
+      return res.status(400).json({
+        success: false,
+        error: 'User already exists'
+      });
     }
 
-    // Create new user
+    // Create user
     const user = await User.create({
       username,
       email,
-      password
+      password, // Password will be hashed in the User model pre-save middleware
     });
 
-    // Generate token using the model method
-    const token = user.generateAuthToken();
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    res.status(201).json({
-      success: true,
-      token,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        preferences: user.preferences
-      }
-    });
+    if (user) {
+      const token = generateToken(user._id);
+      res.status(201).json({
+        success: true,
+        data: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          token,
+        },
+      });
+    }
   } catch (error) {
-    next(error);
+    console.error('Registration error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to register user'
+    });
   }
 };
 
-// Login user
-export const login = async (req, res, next) => {
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists and get password
-    const user = await User.findOne({ email }).select('+password');
+    // Find user
+    const user = await User.findOne({ email });
     if (!user) {
-      return next(new AppError('Invalid credentials', 401, { field: 'email' }));
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
     }
 
-    // Check if user is active
-    if (user.status !== 'active') {
-      return next(new AppError('Your account is not active', 401));
-    }
-
-    // Check if password matches
-    const isMatch = await user.comparePassword(password);
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return next(new AppError('Invalid credentials', 401, { field: 'password' }));
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
     }
 
-    // Generate token using the model method
-    const token = user.generateAuthToken();
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
+    const token = generateToken(user._id);
     res.json({
       success: true,
-      token,
-      user: {
+      data: {
         _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role,
-        preferences: user.preferences
-      }
+        token,
+      },
     });
   } catch (error) {
-    next(error);
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to login'
+    });
   }
 };
 
-// Get current user
-export const getCurrentUser = async (req, res, next) => {
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
+export const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return next(new AppError('User not found', 404));
-    }
-
+    const user = await User.findById(req.user._id).select('-password');
     res.json({
       success: true,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        preferences: user.preferences
-      }
+      data: user,
     });
   } catch (error) {
-    next(error);
+    console.error('Get user error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user data'
+    });
   }
 };
 
