@@ -1,37 +1,38 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
 
-const NotFound: React.FC = () => {
+import { useEffect } from "react";
+import { useLocation, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+
+const NotFound = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.error(
+      "404 Error: User attempted to access non-existent route:",
+      location.pathname
+    );
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col items-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-500 mb-8">
-          <MessageSquare size={32} className="text-white" />
+    <div className="min-h-screen flex items-center justify-center bg-thinkforge-black p-4">
+      <div className="glass-card p-8 rounded-xl neon-border max-w-md w-full text-center">
+        <div className="mb-6">
+          <h1 className="text-7xl font-bold text-thinkforge-purple mb-2">404</h1>
+          <p className="text-xl font-semibold mb-4">Page Not Found</p>
+          <p className="text-foreground/70 text-sm mb-8">
+            The page you're looking for doesn't exist or has been moved.
+          </p>
         </div>
-        <h2 className="text-center text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
-          404 - Page Not Found
-        </h2>
-        <p className="text-center text-lg text-gray-600 dark:text-gray-400 mb-8">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="flex space-x-4">
-          <Link
-            to="/"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-          >
-            Go Home
-          </Link>
-          <Link
-            to="/login"
-            className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-700 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-          >
-            Sign In
-          </Link>
-        </div>
+        <Link to="/">
+          <Button className="bg-thinkforge-purple hover:bg-thinkforge-purple/90">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Return to Home
+          </Button>
+        </Link>
       </div>
     </div>
   );
 };
 
-export default NotFound; 
+export default NotFound;

@@ -1,232 +1,111 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --secondary: #10b981;
-  --dark: #1e1e2e;
-  --darker: #181825;
-  --light: #f8fafc;
-  --accent: #f43f5e;
-  --terminal-black: #1a1a1a;
-  --terminal-white: #f0f0f0;
-  --terminal-gray: #808080;
-  --terminal-font: 'Fira Code', 'Courier New', monospace;
+@layer base {
+  :root {
+    --background: 270 5% 7%;
+    --foreground: 0 0% 98%;
+
+    --card: 270 5% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 270 5% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 273 91% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 260 81% 94%;
+    --secondary-foreground: 275 91% 25%;
+
+    --muted: 270 5% 16%;
+    --muted-foreground: 276 5% 65%;
+
+    --accent: 273 70% 85%;
+    --accent-foreground: 275 91% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 270 5% 16%;
+    --input: 270 5% 16%;
+    --ring: 273 91% 48%;
+
+    --radius: 0.5rem;
+  }
 }
 
-body {
-  margin: 0;
-  font-family: var(--terminal-font);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--terminal-black);
-  color: var(--terminal-white);
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-thinkforge-black text-foreground overflow-x-hidden;
+    background-image: 
+      radial-gradient(circle at top left, rgba(126, 34, 206, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at bottom right, rgba(126, 34, 206, 0.08) 0%, transparent 50%);
+  }
+
+  /* Glass effect classes */
+  .glass {
+    @apply bg-glass-gradient border border-white/10 backdrop-blur-md;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-card {
+    @apply glass rounded-xl;
+    background: rgba(30, 30, 34, 0.7);
+  }
+
+  .glass-dark {
+    @apply glass rounded-xl;
+    background: rgba(18, 18, 18, 0.7);
+  }
+
+  .neon-border {
+    @apply border border-thinkforge-purple/70 shadow-[0_0_15px_rgba(126,34,206,0.3)];
+  }
+
+  .neon-border-light {
+    @apply border border-thinkforge-violet/70 shadow-[0_0_10px_rgba(229,222,255,0.2)];
+  }
+
+  .pixel-corners {
+    clip-path: polygon(
+      0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 
+      100% calc(100% - 4px), calc(100% - 4px) 100%, 
+      4px 100%, 0 calc(100% - 4px)
+    );
+  }
+
+  .shine-animation {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shine-animation::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shine 3s linear infinite;
+  }
 }
 
-.terminal-input {
-  @apply bg-black border border-white/20 text-white font-mono p-2 w-full focus:outline-none focus:border-white/50;
-}
-
-.terminal-button {
-  @apply bg-white text-black font-mono px-4 py-2 hover:bg-gray-200 transition-colors duration-200;
-}
-
-.terminal-link {
-  @apply text-white underline hover:text-gray-300 transition-colors duration-200;
-}
-
-.terminal-card {
-  @apply border border-white/20 bg-black/50 p-4;
-}
-
-.terminal-header {
-  @apply font-mono text-2xl font-bold text-white mb-4;
-}
-
-.terminal-text {
-  @apply font-mono text-white/90;
-}
-
-.terminal-cursor {
-  @apply animate-pulse;
-}
-
-.terminal-window {
-  @apply border border-white/20 bg-black rounded-none;
-}
-
-.terminal-titlebar {
-  @apply bg-white text-black px-4 py-2 font-mono flex items-center justify-between;
-}
-
-.terminal-content {
-  @apply p-4 font-mono;
-}
-
-/* Terminal-style scrollbar */
+/* Hide scrollbar for Chrome, Safari and Opera */
 ::-webkit-scrollbar {
-  width: 8px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--terminal-black);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--terminal-gray);
-  border: 2px solid var(--terminal-black);
-}
-
-.prose pre {
-  background-color: #1e293b !important;
-  border-radius: 0.5rem;
-}
-
-.prose code {
-  color: #e2e8f0;
-}
-
-.prose p {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.prose h1, .prose h2, .prose h3, .prose h4 {
-  color: white;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.prose ul, .prose ol {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding-left: 1.5rem;
-}
-
-.prose li {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-.message-transition-enter {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.message-transition-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 300ms, transform 300ms;
-}
-
-.gradient-text {
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.glass-effect {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-gradient {
-  background: linear-gradient(180deg, var(--darker) 0%, #1a1b26 100%);
-}
-
-.chat-input-shadow {
-  box-shadow: 0 -10px 20px -5px rgba(0, 0, 0, 0.1);
-}
-
-.pulse-animation {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Terminal Styles */
-.terminal-container {
-  font-family: 'Fira Code', 'Courier New', monospace;
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
-}
-
-.terminal-messages::-webkit-scrollbar {
-  width: 8px;
-}
-
-.terminal-messages::-webkit-scrollbar-track {
-  background: rgba(0, 255, 0, 0.1);
-}
-
-.terminal-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 0, 0.3);
-  border-radius: 4px;
-}
-
-.terminal-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 0, 0.4);
-}
-
-.message.system pre {
-  color: #ffd700;
-}
-
-.message.assistant pre {
-  color: #00ff00;
-}
-
-.message.user pre {
-  color: #00ffff;
-}
-
-.terminal-cursor::after {
-  content: '_';
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-/* Terminal animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.message {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-/* Terminal input styles */
-.terminal-input-area textarea {
-  background: transparent;
-  caret-color: #00ff00;
-  font-family: 'Fira Code', 'Courier New', monospace;
-}
-
-.terminal-input-area textarea::placeholder {
-  color: rgba(0, 255, 0, 0.3);
-}
-
-/* Terminal header styles */
-.terminal-header {
-  user-select: none;
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

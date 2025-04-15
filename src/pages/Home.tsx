@@ -1,125 +1,167 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { MessageSquare, Brain, Code, Sparkles, ArrowRight } from 'lucide-react';
 
-const Home: React.FC = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+import { Link } from 'react-router-dom';
+import { ArrowRight, Brain, LineChart, Zap, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Layout from '@/components/layout/Layout';
 
-  const features = [
-    {
-      icon: <Brain className="w-6 h-6" />,
-      title: "Powered by Mistral 7B",
-      description: "Advanced language model for human-like conversations and complex problem-solving."
-    },
-    {
-      icon: <Code className="w-6 h-6" />,
-      title: "Code Understanding",
-      description: "Analyze, explain, and generate code across multiple programming languages."
-    },
-    {
-      icon: <MessageSquare className="w-6 h-6" />,
-      title: "Natural Conversations",
-      description: "Engage in fluid, context-aware discussions with advanced memory capabilities."
-    },
-    {
-      icon: <Sparkles className="w-6 h-6" />,
-      title: "Creative Assistant",
-      description: "Help with writing, brainstorming, and creative problem-solving tasks."
-    }
-  ];
-
+const Home = () => {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <Layout>
       {/* Hero Section */}
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+      <section className="relative py-20 md:py-28 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-thinkforge-purple/20 rounded-full filter blur-3xl animate-pulse-glow" />
+          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-thinkforge-purple/10 rounded-full filter blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
         </div>
-        
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-              Welcome to ThinkForge AI
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
-              Your intelligent companion powered by Mistral 7B. Experience advanced AI conversations, 
-              code analysis, and creative problem-solving.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <button
-                onClick={() => navigate('/chat')}
-                className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Start Chatting
-              </button>
-              <button 
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-sm font-semibold leading-6 text-white flex items-center gap-x-2"
-              >
-                Learn more <ArrowRight className="w-4 h-4" />
-              </button>
+
+        <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4">
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 animate-fade-in">
+            Enhance Your Learning with
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-thinkforge-purple to-thinkforge-violet block mt-2">
+              AI-Powered Insights
+            </span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-foreground/80 mb-10 max-w-2xl animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            ThinkForge helps students identify and improve weak academic areas through interactive quizzes and real-time AI-powered feedback.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <Link to="/signup">
+              <Button size="lg" className="bg-thinkforge-purple hover:bg-thinkforge-purple/90 rounded-md px-8 py-6 text-base shine-animation">
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/chat">
+              <Button size="lg" variant="outline" className="border-thinkforge-purple/50 hover:border-thinkforge-purple hover:bg-thinkforge-purple/10 rounded-md px-8 py-6 text-base">
+                Try Demo
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="mt-20 w-full max-w-5xl glass-card p-1 rounded-2xl neon-border pixel-corners animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <div className="rounded-xl overflow-hidden">
+              <img 
+                src="https://ik.imagekit.io/p50/learnventor-assistant.png" 
+                alt="ThinkForge AI Dashboard" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Features Section */}
-      <div id="features" className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-400">Advanced Capabilities</h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Everything you need in an AI assistant
-            </p>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
-              Powered by the latest Mistral 7B model, offering state-of-the-art natural language processing
-              and understanding capabilities.
+      <section className="py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-thinkforge-purple to-thinkforge-violet">
+              Key Features
+            </span>
+          </h2>
+          <p className="text-foreground/70 max-w-2xl mx-auto">
+            Designed to revolutionize the way students learn and improve their academic performance
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+          <div className="glass-card p-8 rounded-xl flex flex-col items-center text-center group hover:neon-border transition-all duration-300">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center bg-thinkforge-purple/20 mb-6 group-hover:bg-thinkforge-purple/30 transition-colors">
+              <Brain className="h-8 w-8 text-thinkforge-purple" />
+            </div>
+            <h3 className="text-xl font-semibold mb-3">AI Chatbot for Quizzes</h3>
+            <p className="text-sm text-foreground/70">
+              Engage in real-time Q&A with an intelligent AI that evaluates responses and offers personalized feedback.
             </p>
           </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
-              {features.map((feature, index) => (
-                <div key={index} className="relative pl-16">
-                  <dt className="text-base font-semibold leading-7 text-white">
-                    <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                      {feature.icon}
-                    </div>
-                    {feature.title}
-                  </dt>
-                  <dd className="mt-2 text-base leading-7 text-gray-300">{feature.description}</dd>
-                </div>
-              ))}
-            </dl>
+
+          <div className="glass-card p-8 rounded-xl flex flex-col items-center text-center group hover:neon-border transition-all duration-300">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center bg-thinkforge-purple/20 mb-6 group-hover:bg-thinkforge-purple/30 transition-colors">
+              <LineChart className="h-8 w-8 text-thinkforge-purple" />
+            </div>
+            <h3 className="text-xl font-semibold mb-3">Progress Tracking</h3>
+            <p className="text-sm text-foreground/70">
+              Dynamic visual charts to showcase strengths and areas for improvement with detailed performance analytics.
+            </p>
+          </div>
+
+          <div className="glass-card p-8 rounded-xl flex flex-col items-center text-center group hover:neon-border transition-all duration-300">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center bg-thinkforge-purple/20 mb-6 group-hover:bg-thinkforge-purple/30 transition-colors">
+              <Zap className="h-8 w-8 text-thinkforge-purple" />
+            </div>
+            <h3 className="text-xl font-semibold mb-3">Seamless Experience</h3>
+            <p className="text-sm text-foreground/70">
+              Lightning-fast performance, smooth animations, and an ultra-responsive interface optimized for all devices.
+            </p>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-thinkforge-purple to-thinkforge-violet">
+              How It Works
+            </span>
+          </h2>
+          <p className="text-foreground/70 max-w-2xl mx-auto">
+            Simple steps to improve your academic performance
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+          <div className="relative">
+            <div className="glass-card p-8 rounded-xl">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-thinkforge-purple flex items-center justify-center font-bold text-white">1</div>
+              <h3 className="text-xl font-semibold mb-3 mt-4">Take Interactive Quizzes</h3>
+              <p className="text-sm text-foreground/70">
+                Engage with our AI-powered quiz system that adapts to your knowledge level and learning style.
+              </p>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="glass-card p-8 rounded-xl">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-thinkforge-purple flex items-center justify-center font-bold text-white">2</div>
+              <h3 className="text-xl font-semibold mb-3 mt-4">Receive Real-time Feedback</h3>
+              <p className="text-sm text-foreground/70">
+                Get instant analysis and personalized suggestions to improve your understanding of difficult concepts.
+              </p>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="glass-card p-8 rounded-xl">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-thinkforge-purple flex items-center justify-center font-bold text-white">3</div>
+              <h3 className="text-xl font-semibold mb-3 mt-4">Track Your Progress</h3>
+              <p className="text-sm text-foreground/70">
+                Visualize your improvement over time with detailed charts and analytics that highlight your growth.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
-      <div className="relative isolate mt-32 px-6 py-32 sm:mt-56 sm:py-40 lg:px-8">
-        <div className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl">
-          <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
-        </div>
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Ready to get started?
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
-            Experience the power of Mistral 7B in your conversations. Start chatting now and discover
-            what AI can do for you.
+      <section className="py-16 md:py-24">
+        <div className="glass-card p-12 rounded-xl neon-border max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Ready to transform your learning experience?</h2>
+          <p className="text-foreground/70 mb-8 max-w-xl mx-auto">
+            Join thousands of students who are already improving their academic performance with ThinkForge.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <button
-              onClick={() => navigate('/chat')}
-              className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Start Chatting
-            </button>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link to="/signup">
+              <Button size="lg" className="bg-thinkforge-purple hover:bg-thinkforge-purple/90 rounded-md px-8 py-6 text-base">
+                Start Learning Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </Layout>
   );
 };
 
