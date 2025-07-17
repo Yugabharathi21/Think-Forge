@@ -11,8 +11,12 @@ import ChatTips from '@/features/chat/components/ChatTips';
 import TypingIndicator from '@/features/chat/components/TypingIndicator';
 import { subjects } from '@/features/chat/constants';
 import { Message } from '@/features/chat/types';
+import { generateChatResponse } from '@/lib/ollama';
+import { chatService } from '@/lib/database';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Chat = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -23,6 +27,7 @@ const Chat = () => {
   ]);
   const [isWaitingForAI, setIsWaitingForAI] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change
@@ -30,7 +35,7 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     const newUserMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -45,18 +50,38 @@ const Chat = () => {
     if (!selectedSubject) {
       processSubjectSelection(content);
     } else {
-      processChatLearningMessage(content);
+      await processChatLearningMessage(content);
     }
   };
   
-  const processSubjectSelection = (content: string) => {
+  const processSubjectSelection = async (content: string) => {
     const subjectMatch = subjects.find(
       subject => content.toLowerCase().includes(subject.toLowerCase())
     );
     
-    setTimeout(() => {
+    setTimeout(async () => {
       if (subjectMatch) {
+        console.log('📚 Subject selected:', subjectMatch);
         setSelectedSubject(subjectMatch);
+        
+        // Create chat session when subject is selected
+        if (user && !sessionId) {
+          try {
+            console.log('📝 Creating chat session for subject:', subjectMatch);
+            const session = await chatService.createSession(
+              user.id, 
+              subjectMatch, 
+              `Learning ${subjectMatch}`
+            );
+            if (session) {
+              setSessionId(session.id);
+              console.log('✅ Chat session created:', session.id);
+            }
+          } catch (error) {
+            console.error('❌ Failed to create chat session:', error);
+          }
+        }
+        
         const newAIMessage: Message = {
           id: Date.now().toString(),
           type: 'ai',
@@ -77,33 +102,37 @@ const Chat = () => {
     }, 1500);
   };
   
-  const processChatLearningMessage = (message: string) => {
-    // In a real implementation, this would call an AI service
-    // For now, we'll have some hard-coded responses based on keywords
-    setTimeout(() => {
-      let response = "";
-      const lcMessage = message.toLowerCase();
+  const processChatLearningMessage = async (message: string) => {
+    try {
+      console.log(`🤖 Processing message for ${selectedSubject}:`, message);
       
-      if (selectedSubject === 'Mathematics') {
-        if (lcMessage.includes('derivative') || lcMessage.includes('calculus')) {
-          response = "In calculus, a derivative measures how a function changes as its input changes. The process of finding a derivative is called differentiation. The derivative of a function f(x) is denoted as f'(x) or df/dx. For example, the derivative of f(x) = x² is f'(x) = 2x.";
-        } else if (lcMessage.includes('trigonometry') || lcMessage.includes('sin') || lcMessage.includes('cos')) {
-          response = "Trigonometry is the branch of mathematics dealing with the relations of the sides and angles of triangles. The main trigonometric functions are sine (sin), cosine (cos), and tangent (tan). For example, in a right triangle, sin(θ) equals the opposite side divided by the hypotenuse.";
-        } else {
-          response = "That's an interesting topic in mathematics. Could you ask me something more specific about it? I can help with algebra, calculus, geometry, trigonometry, and many other areas of mathematics.";
+      // Create chat session if it doesn't exist
+      let currentSessionId = sessionId;
+      if (!currentSessionId && user) {
+        console.log('📝 Creating new chat session...');
+        const session = await chatService.createSession(
+          user.id, 
+          selectedSubject || 'General', 
+          `Chat about ${selectedSubject || 'General'}`
+        );
+        if (session) {
+          currentSessionId = session.id;
+          setSessionId(currentSessionId);
+          console.log('✅ Chat session created:', currentSessionId);
         }
-      } else if (selectedSubject === 'Physics') {
-        if (lcMessage.includes('newton') || lcMessage.includes('force') || lcMessage.includes('motion')) {
-          response = "Newton's laws of motion are three laws that describe the relationship between the motion of an object and the forces acting on it. The first law states that an object will remain at rest or in uniform motion unless acted upon by an external force. The second law states that force equals mass times acceleration (F = ma). The third law states that for every action, there is an equal and opposite reaction.";
-        } else if (lcMessage.includes('einstein') || lcMessage.includes('relativity')) {
-          response = "Einstein's theory of relativity consists of two physical theories: special relativity and general relativity. Special relativity applies to all physical phenomena in the absence of gravity, while general relativity explains the law of gravitation and its relation to other forces of nature.";
-        } else {
-          response = "That's an interesting physics topic. Could you ask me something more specific about it? I can help with mechanics, thermodynamics, electromagnetism, quantum physics, and many other areas of physics.";
-        }
-      } else {
-        response = `That's an interesting topic in ${selectedSubject}. Could you ask me something more specific about it so I can provide more detailed information?`;
       }
-      
+
+      // Generate AI response using Ollama
+      console.log('🎯 Generating AI response...');
+      const response = await generateChatResponse(
+        currentSessionId,
+        message,
+        selectedSubject || 'Computer Science',
+        messages.slice(-5).map(m => `${m.type}: ${m.content}`) // Last 5 messages for context
+      );
+
+      console.log('✅ AI response received:', response.substring(0, 100) + '...');
+
       const newAIMessage: Message = {
         id: Date.now().toString(),
         type: 'ai',
@@ -113,7 +142,20 @@ const Chat = () => {
       
       setMessages(prev => [...prev, newAIMessage]);
       setIsWaitingForAI(false);
-    }, 2000);
+    } catch (error) {
+      console.error('❌ Error generating AI response:', error);
+      
+      // Fallback response
+      const fallbackMessage: Message = {
+        id: Date.now().toString(),
+        type: 'ai',
+        content: `I'm having trouble processing your question about ${selectedSubject}. Could you try rephrasing it or ask about a specific concept?`,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
+      setIsWaitingForAI(false);
+    }
   };
 
   return (

@@ -1,15 +1,16 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Signup = () => {
-  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,17 +21,13 @@ const Signup = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Account created successfully",
-        description: "Welcome to ThinkForge!",
-      });
-      
-      // In a real app, redirect to dashboard or onboarding after signup
-      // navigate('/onboarding');
-    }, 1500);
+    const success = await signUp(email, password, name);
+    
+    if (success) {
+      navigate('/login');
+    }
+    
+    setIsLoading(false);
   };
 
   return (

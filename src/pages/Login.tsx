@@ -1,15 +1,17 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
-  const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,17 +21,16 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Login successful",
-        description: "Welcome back to ThinkForge!",
-      });
-      
-      // In a real app, redirect to dashboard or chat after login
-      // navigate('/chat');
-    }, 1500);
+    const success = await signIn(email, password);
+    
+    if (success) {
+      // Redirect to intended destination or default to /chat
+      const locationState = location.state as { from?: { pathname: string } } | null;
+      const from = locationState?.from?.pathname || '/chat';
+      navigate(from, { replace: true });
+    }
+    
+    setIsLoading(false);
   };
 
   return (
