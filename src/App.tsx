@@ -14,6 +14,7 @@ import Chat from "./pages/Chat";
 import MCQQuiz from "./pages/MCQQuiz";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
+import StudyPlan from "./pages/StudyPlan";
 import Debug from "./pages/Debug";
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +48,11 @@ const App = () => (
           <Route path="/profile" element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/study-plan" element={
+            <ProtectedRoute>
+              <StudyPlan />
             </ProtectedRoute>
           } />
           <Route path="/debug" element={<Debug />} />

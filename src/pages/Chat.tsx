@@ -102,9 +102,68 @@ const Chat = () => {
     }, 1500);
   };
   
+  // Helper function to extract topic from user message
+  const extractTopicFromMessage = (message: string): string | null => {
+    // Simple extraction - look for phrases like "create a flowchart for X" or "study plan for Y"
+    const patterns = [
+      /(?:flowchart|study plan|mind map|roadmap)\s+(?:for|about|on)\s+([^.!?]+)/i,
+      /(?:learn|study)\s+([^.!?]+?)(?:\s+(?:flowchart|study plan|mind map))/i,
+      /(?:help me with|teach me)\s+([^.!?]+)/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = message.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    return null;
+  };
+  
   const processChatLearningMessage = async (message: string) => {
     try {
       console.log(`🤖 Processing message for ${selectedSubject}:`, message);
+      
+      // Check if user is requesting a flowchart or study plan
+      const flowchartKeywords = ['flowchart', 'flow chart', 'study plan', 'learning plan', 'mind map', 'mindmap', 'roadmap', 'study roadmap'];
+      const isFlowchartRequest = flowchartKeywords.some(keyword => 
+        message.toLowerCase().includes(keyword)
+      );
+
+      if (isFlowchartRequest) {
+        console.log('🎯 Flowchart/Study plan request detected');
+        
+        // Determine the type based on keywords
+        const isMindMap = message.toLowerCase().includes('mind map') || message.toLowerCase().includes('mindmap');
+        const type = isMindMap ? 'mind-map' : 'study-plan';
+        
+        // Extract topic (use selected subject or try to extract from message)
+        const topic = selectedSubject || extractTopicFromMessage(message) || 'General Learning';
+        
+        // Create a response with a link to the study plan page
+        const planType = isMindMap ? 'mind map' : 'study plan';
+        const studyPlanUrl = `/study-plan?topic=${encodeURIComponent(topic)}&type=${type}`;
+        
+        const responseMessage = `I'll create a ${planType} for ${topic}! Click the button below to view your AI-generated ${planType}.`;
+        
+        const newAIMessage: Message = {
+          id: Date.now().toString(),
+          type: 'ai',
+          content: responseMessage,
+          timestamp: new Date(),
+          metadata: {
+            type: 'flowchart_link',
+            url: studyPlanUrl,
+            topic: topic,
+            planType: planType
+          }
+        };
+
+        setMessages(prev => [...prev, newAIMessage]);
+        setIsWaitingForAI(false);
+        return;
+      }
       
       // Create chat session if it doesn't exist
       let currentSessionId = sessionId;
@@ -175,7 +234,8 @@ const Chat = () => {
                 key={message.id} 
                 type={message.type} 
                 content={message.content} 
-                timestamp={message.timestamp} 
+                timestamp={message.timestamp}
+                metadata={message.metadata}
               />
             ))}
             

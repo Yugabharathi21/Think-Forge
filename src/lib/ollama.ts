@@ -2,9 +2,20 @@ import { MCQQuestionData } from '@/features/chat/types';
 import { chatService, quizService } from './database';
 
 // Environment variable for Ollama URL - fallback to localhost for development
-const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434/api/generate';
+const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
+const OLLAMA_API_URL = `${OLLAMA_BASE_URL}/api/generate`;
+const OLLAMA_TAGS_URL = `${OLLAMA_BASE_URL}/api/tags`;
 const OLLAMA_MODEL = import.meta.env.VITE_OLLAMA_MODEL || 'mistral:7b';
 const USE_MOCK_RESPONSES = import.meta.env.VITE_USE_MOCK_AI === 'true';
+
+// Debug environment variables on load
+console.log('🔧 Ollama Configuration:');
+console.log('   VITE_OLLAMA_URL:', import.meta.env.VITE_OLLAMA_URL);
+console.log('   OLLAMA_BASE_URL:', OLLAMA_BASE_URL);
+console.log('   OLLAMA_API_URL:', OLLAMA_API_URL);
+console.log('   OLLAMA_TAGS_URL:', OLLAMA_TAGS_URL);
+console.log('   OLLAMA_MODEL:', OLLAMA_MODEL);
+console.log('   USE_MOCK_RESPONSES:', USE_MOCK_RESPONSES);
 
 interface OllamaResponse {
   response: string;
@@ -162,18 +173,37 @@ export async function generateChatResponse(
   3. Includes examples when helpful
   4. Encourages further learning
   
+  Keep your response concise but informative (2-3 paragraphs maximum).
+  
   Response:`;
 
   let response: string;
 
   if (USE_MOCK_RESPONSES || !await isOllamaAvailable()) {
+    console.log('📋 Using mock response (Ollama unavailable or disabled)');
     response = generateMockResponse(message, subject);
   } else {
     try {
+      console.log('🚀 Generating AI response for:', message.substring(0, 50) + '...');
       response = await callOllamaAPI(prompt);
+      console.log('✅ AI response generated successfully');
     } catch (error) {
-      console.error('Ollama API error:', error);
-      response = generateMockResponse(message, subject);
+      console.error('❌ Ollama API error, falling back to mock response:', error);
+      
+      // Provide specific error feedback to user
+      if (error instanceof Error && error.message.includes('timed out')) {
+        response = `I'm sorry, but the AI is taking longer than expected to respond (request timed out). This might happen when the AI model is busy or your question is very complex.
+
+Here's a basic response to help you with ${subject}: ${generateMockResponse(message, subject)}
+
+💡 Tip: Try asking a more specific or shorter question, or try again in a few moments when the AI might be less busy.`;
+      } else {
+        response = `I'm experiencing some technical difficulties connecting to the AI service right now. Let me provide you with a helpful response about ${subject}:
+
+${generateMockResponse(message, subject)}
+
+🔧 The AI service should be back online shortly. Please try again in a few moments for more detailed responses.`;
+      }
     }
   }
 
@@ -187,18 +217,38 @@ export async function generateChatResponse(
 
 async function isOllamaAvailable(): Promise<boolean> {
   try {
-    console.log('🔄 Checking Ollama connection at:', OLLAMA_API_URL.replace('/api/generate', '/api/tags'));
-    const response = await fetch(OLLAMA_API_URL.replace('/api/generate', '/api/tags'), {
+    console.log('🔄 Checking Ollama connection at:', OLLAMA_TAGS_URL);
+    const response = await fetch(OLLAMA_TAGS_URL, {
       method: 'GET',
       signal: AbortSignal.timeout(3000), // 3 second timeout
     });
     
     if (response.ok) {
-      const data = await response.json();
-      console.log('✅ Ollama connected successfully. Available models:', data.models?.map((m: { name: string }) => m.name) || []);
-      console.log('🔧 Ollama model configured:', OLLAMA_MODEL);
-      console.log('🔧 Use mock responses:', USE_MOCK_RESPONSES);
-      return true;
+      // Try to parse the response to make sure it's a valid Ollama API
+      try {
+        const data = await response.json();
+        console.log('✅ Ollama service is running and responding correctly');
+        console.log('🔧 Available models:', data.models?.length || 0);
+        console.log('🔧 Ollama model configured:', OLLAMA_MODEL);
+        console.log('🔧 Use mock responses:', USE_MOCK_RESPONSES);
+        
+        // Check if our configured model is available
+        const modelExists = data.models?.some((model: { name: string }) => 
+          model.name === OLLAMA_MODEL || model.name.startsWith(OLLAMA_MODEL.split(':')[0])
+        );
+        
+        if (modelExists) {
+          console.log('✅ Configured model found:', OLLAMA_MODEL);
+        } else {
+          console.log('⚠️ Configured model not found:', OLLAMA_MODEL);
+          console.log('📋 Available models:', data.models?.map((m: { name: string }) => m.name));
+        }
+        
+        return true;
+      } catch (jsonError) {
+        console.log('⚠️ Ollama is running but not responding with valid JSON');
+        return false;
+      }
     } else {
       console.log('❌ Ollama connection failed. Status:', response.status);
       return false;
@@ -209,10 +259,12 @@ async function isOllamaAvailable(): Promise<boolean> {
   }
 }
 
-async function callOllamaAPI(prompt: string): Promise<string> {
+async function callOllamaAPI(prompt: string, retryCount: number = 0): Promise<string> {
   console.log('🤖 Sending request to Ollama API...');
   console.log('🔧 API URL:', OLLAMA_API_URL);
   console.log('🔧 Model:', OLLAMA_MODEL);
+  console.log('� Retry attempt:', retryCount + 1);
+  console.log('�📝 Prompt length:', prompt.length, 'characters');
   console.log('📝 Prompt preview:', prompt.substring(0, 200) + '...');
   
   const requestBody = {
@@ -222,34 +274,84 @@ async function callOllamaAPI(prompt: string): Promise<string> {
     options: {
       temperature: 0.7,
       top_p: 0.9,
-      max_tokens: 500,
+      num_predict: 800, // Increased token limit
+      num_ctx: 4096,    // Context window
     },
   };
 
   console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
   
-  const response = await fetch(OLLAMA_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
+  // Create an AbortController for manual timeout control
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    console.log('⏰ Request timeout after 60 seconds');
+    controller.abort();
+  }, 60000); // 60 second timeout
+  
+  try {
+    const startTime = Date.now();
+    console.log('⏱️ Request started at:', new Date(startTime).toISOString());
+    
+    const response = await fetch(OLLAMA_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
 
-  console.log('📥 Response status:', response.status);
-  console.log('📥 Response headers:', Object.fromEntries(response.headers));
+    clearTimeout(timeoutId);
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    console.log('📥 Response status:', response.status);
+    console.log('⏱️ Request duration:', duration, 'ms');
+    console.log('📥 Response headers:', Object.fromEntries(response.headers));
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.log('❌ Ollama API error. Status:', response.status);
-    console.log('❌ Error response:', errorText);
-    throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log('❌ Ollama API error. Status:', response.status);
+      console.log('❌ Error response:', errorText);
+      console.log('🔧 API URL used:', OLLAMA_API_URL);
+      
+      // Retry on certain errors
+      if ((response.status === 500 || response.status === 503) && retryCount < 2) {
+        console.log('🔄 Retrying due to server error...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        return callOllamaAPI(prompt, retryCount + 1);
+      }
+      
+      throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+    }
+
+    const data: OllamaResponse = await response.json();
+    console.log('✅ Ollama response received. Length:', data.response.length, 'characters');
+    console.log('📄 Response preview:', data.response.substring(0, 200) + '...');
+    console.log('⏱️ Total processing time:', duration, 'ms');
+    return data.response.trim();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error('❌ Ollama API call failed:', error);
+    
+    if (error instanceof Error) {
+      console.error('❌ Error details:', error.message);
+      
+      // Retry on timeout errors
+      if (error.name === 'AbortError' && retryCount < 2) {
+        console.log('🔄 Retrying due to timeout...');
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+        return callOllamaAPI(prompt, retryCount + 1);
+      }
+      
+      // If it's a timeout, provide a more specific error
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out after 60 seconds. The AI model might be busy or the prompt is too complex.');
+      }
+    }
+    
+    throw error;
   }
-
-  const data: OllamaResponse = await response.json();
-  console.log('✅ Ollama response received. Length:', data.response.length, 'characters');
-  console.log('📄 Response preview:', data.response.substring(0, 200) + '...');
-  return data.response.trim();
 }
 
 function generateMockResponse(message: string, subject: string): string {
@@ -393,6 +495,14 @@ JSON Response:`;
     return finalQuestions;
   } catch (error) {
     console.error('❌ Error generating questions with Ollama:', error);
+    
+    // Provide more specific error handling
+    if (error instanceof Error && error.message.includes('timed out')) {
+      console.log('⏰ Quiz generation timed out, using fallback questions');
+    } else {
+      console.log('🔧 Quiz generation failed, using fallback questions');
+    }
+    
     // Fallback to sample questions
     console.log('📋 Falling back to sample questions for', subject);
     const fallbackQuestions = generateFallbackQuestions(subject, difficulty, count);

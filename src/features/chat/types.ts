@@ -6,6 +6,12 @@ export interface Message {
   type: MessageType;
   content: string;
   timestamp: Date;
+  metadata?: {
+    type?: string;
+    url?: string;
+    topic?: string;
+    planType?: string;
+  };
 }
 
 export type MessageType = 'user' | 'ai' | 'system';
