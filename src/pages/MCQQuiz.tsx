@@ -14,6 +14,7 @@ import { generateQuizQuestions, analyzeMistake, analyzeQuizPerformance } from '@
 import { quizService, testDatabaseConnection } from '@/lib/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { MCQQuestionData } from '@/features/chat/types';
+import { motion } from 'framer-motion';
 
 const MCQQuiz = () => {
   const navigate = useNavigate();
@@ -273,28 +274,48 @@ const MCQQuiz = () => {
     setIsAnswerSubmitted(false);
   };
 
+  useEffect(() => {
+    document.body.style.background = '#0a0a0a';
+    return () => {
+      document.body.style.background = '';
+    };
+  }, []);
+  
   return (
     <Layout>
-      <div className="container mx-auto py-8">
-        <div className="glass-card p-6 rounded-xl">
-          <h1 className="text-2xl font-bold mb-6 text-center">MCQ Quiz</h1>
+      <div className="container mx-auto py-8 bg-crow relative">
+        <div className="absolute -top-10 -left-20 w-64 h-64 bg-flame-gradient blur-3xl opacity-20 -z-10 transform rotate-12"></div>
+        <div className="absolute top-40 -right-20 w-80 h-80 bg-flame-gradient blur-3xl opacity-10 -z-10 transform -rotate-12"></div>
+        
+        <motion.div 
+          className="border border-flamePurple bg-glass backdrop-blur-sm p-6 font-mono text-white"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          <h1 className="text-2xl font-bold mb-6 text-center text-transparent bg-clip-text bg-flame-gradient tracking-tight">MCQ Quiz</h1>
           
           {!subject && (
             <div className="space-y-6">
-              <h2 className="text-xl font-medium">Choose a Subject</h2>
+              <h2 className="text-xl font-medium text-white tracking-tight">Choose a Subject</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subjects.map((subj) => (
-                  <Button
+                  <motion.div
                     key={subj}
-                    className={`glass-card h-auto p-4 flex items-center justify-between ${
-                      subject === subj ? 'neon-border-light' : ''
-                    }`}
-                    variant="outline"
-                    onClick={() => handleSubjectSelection(subj)}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <span>{subj}</span>
-                    <Brain className="h-5 w-5 ml-2" />
-                  </Button>
+                    <Button
+                      className={`border border-flamePurple/30 bg-glass backdrop-blur-sm h-auto p-4 flex items-center justify-between w-full ${
+                        subject === subj ? 'border-flamePurple' : ''
+                      }`}
+                      variant="outline"
+                      onClick={() => handleSubjectSelection(subj)}
+                    >
+                      <span className="text-white">{subj}</span>
+                      <Brain className="h-5 w-5 ml-2 text-flamePurple-light" />
+                    </Button>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -302,38 +323,38 @@ const MCQQuiz = () => {
           
           {subject && !quizStarted && !quizCompleted && (
             <div className="space-y-6">
-              <h2 className="text-xl font-medium">Ready to Start</h2>
-              <p className="text-foreground/80">
-                You have selected <span className="font-medium">{subject}</span>. 
+              <h2 className="text-xl font-medium text-transparent bg-clip-text bg-flame-gradient tracking-tight">Ready to Start</h2>
+              <p className="text-white/80">
+                You have selected <span className="font-medium text-flamePurple-light">{subject}</span>. 
                 This quiz will test your knowledge with AI-generated multiple-choice questions.
               </p>
               
               {/* Difficulty Selection */}
               <div className="space-y-3">
-                <Label className="text-base font-medium">Select Difficulty Level</Label>
+                <Label className="text-base font-medium text-white">Select Difficulty Level</Label>
                 <RadioGroup 
                   value={difficulty} 
                   onValueChange={(value) => setDifficulty(value as 'easy' | 'medium' | 'hard')}
                   className="flex space-x-6"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="easy" id="easy" />
-                    <Label htmlFor="easy">Easy</Label>
+                    <RadioGroupItem value="easy" id="easy" className="text-flamePurple border-flamePurple" />
+                    <Label htmlFor="easy" className="text-white">Easy</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="medium" id="medium" />
-                    <Label htmlFor="medium">Medium</Label>
+                    <RadioGroupItem value="medium" id="medium" className="text-flamePurple border-flamePurple" />
+                    <Label htmlFor="medium" className="text-white">Medium</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hard" id="hard" />
-                    <Label htmlFor="hard">Hard</Label>
+                    <RadioGroupItem value="hard" id="hard" className="text-flamePurple border-flamePurple" />
+                    <Label htmlFor="hard" className="text-white">Hard</Label>
                   </div>
                 </RadioGroup>
               </div>
               
               <div className="flex justify-center mt-6">
                 <Button 
-                  className="bg-thinkforge-purple hover:bg-thinkforge-purple/90"
+                  className="bg-flamePurple hover:bg-flamePurple-light text-white rounded-none border border-flamePurple/20"
                   onClick={startQuiz}
                   disabled={loading}
                 >
@@ -531,13 +552,14 @@ const MCQQuiz = () => {
           <div className="mt-8 text-center">
             <Button
               variant="link"
+              className="text-flamePurple hover:text-flamePurple-light"
               onClick={() => navigate('/chat')}
             >
               <BookOpen className="mr-2 h-4 w-4" />
               Switch to 1:1 Learning Chat
             </Button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </Layout>
   );
