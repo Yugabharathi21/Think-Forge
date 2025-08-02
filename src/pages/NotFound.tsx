@@ -1,49 +1,111 @@
-
 import { useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Link as RouterLink, useLocation } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Container,
+  Typography,
+  Paper,
+  useTheme
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from "framer-motion";
+import Layout from '@/components/layout/Layout';
 
-const NotFound = () => {
+const MaterialNotFound = () => {
   const location = useLocation();
+  const theme = useTheme();
 
   useEffect(() => {
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
-    
-    document.body.style.background = '#0a0a0a';
-    return () => {
-      document.body.style.background = '';
-    };
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-crow p-4 font-mono text-white">
-      <motion.div 
-        className="border border-flamePurple bg-glass backdrop-blur-sm p-8 max-w-md w-full text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+    <Layout>
+      <Container 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 'calc(100vh - 250px)',
+          pt: 6,
+          pb: 6 
+        }}
       >
-        <div className="mb-6">
-          <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-flame-gradient mb-2 tracking-tight">404</h1>
-          <p className="text-xl font-semibold mb-4 tracking-tight">Page Not Found</p>
-          <p className="text-white/70 text-sm mb-8 tracking-wide">
-            The page you're looking for doesn't exist or has been moved.
-          </p>
-        </div>
-        <Link to="/">
-          <Button className="bg-flamePurple hover:bg-flamePurple-light rounded-none">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Return to Home
-          </Button>
-        </Link>
-      </motion.div>
-    </div>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          style={{ width: '100%', maxWidth: 500 }}
+        >
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: 5, 
+              textAlign: 'center',
+              borderRadius: 2,
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Decorative elements */}
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '5px',
+                background: theme.palette.primary.main,
+              }} 
+            />
+            
+            <Typography 
+              variant="h1" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700, 
+                fontSize: '5rem',
+                color: theme.palette.primary.main,
+                mb: 2
+              }}
+            >
+              404
+            </Typography>
+            
+            <Typography 
+              variant="h5" 
+              component="h2" 
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              Page Not Found
+            </Typography>
+            
+            <Typography 
+              color="text.secondary"
+              sx={{ mb: 4 }}
+            >
+              The page you're looking for doesn't exist or has been moved.
+            </Typography>
+            
+            <Button 
+              component={RouterLink} 
+              to="/"
+              variant="contained"
+              startIcon={<ArrowBackIcon />}
+              size="large"
+            >
+              Return to Home
+            </Button>
+          </Paper>
+        </motion.div>
+      </Container>
+    </Layout>
   );
 };
 
-export default NotFound;
+export default MaterialNotFound;

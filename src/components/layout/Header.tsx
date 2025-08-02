@@ -1,204 +1,325 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, BrainCircuit, User, LogOut, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { 
+  AppBar, 
+  Box, 
+  Toolbar, 
+  IconButton, 
+  Typography, 
+  Menu, 
+  Container, 
+  Avatar, 
+  Button, 
+  MenuItem,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  useTheme as useMuiTheme,
+  useMediaQuery,
+  Divider
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import BrainIcon from '@mui/icons-material/Psychology';
+import ChatIcon from '@mui/icons-material/Chat';
+import QuizIcon from '@mui/icons-material/Quiz';
+import ProgressIcon from '@mui/icons-material/Leaderboard';
+import UserIcon from '@mui/icons-material/Person';
+import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
+  const { mode, toggleColorMode } = useTheme();
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  const handleDrawerToggle = () => {
+    setDrawerOpen(!drawerOpen);
+  };
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
-    setIsMenuOpen(false);
+    handleCloseUserMenu();
   };
 
   const getInitials = (email: string) => {
-    return email.split('@')[0].substring(0, 2).toUpperCase();
+    return email?.split('@')[0].substring(0, 2).toUpperCase() || 'U';
   };
 
-  return (
-    <header className="w-full fixed top-0 z-50 glass-dark py-4 px-6">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="flex items-center space-x-2">
-          <BrainCircuit className="h-8 w-8 text-thinkforge-purple" />
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-thinkforge-purple to-thinkforge-violet">
-            ThinkForge
-          </span>
-        </Link>
+  const navItems = [
+    { name: 'Home', path: '/', icon: <BrainIcon /> },
+    { name: 'AI Chat', path: '/chat', icon: <ChatIcon /> },
+    { name: 'MCQ Quiz', path: '/mcq-quiz', icon: <QuizIcon /> },
+    { name: 'Progress', path: '/progress', icon: <ProgressIcon /> },
+  ];
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-sm text-foreground/80 hover:text-thinkforge-purple transition-colors">
-            Home
-          </Link>
-          <Link to="/chat" className="text-sm text-foreground/80 hover:text-thinkforge-purple transition-colors">
-            AI Chat
-          </Link>
-          <Link to="/mcq-quiz" className="text-sm text-foreground/80 hover:text-thinkforge-purple transition-colors">
-            MCQ Quiz
-          </Link>
-          <Link to="/progress" className="text-sm text-foreground/80 hover:text-thinkforge-purple transition-colors">
-            Progress
-          </Link>
-          
-          {/* Conditional Authentication Section */}
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 hover:bg-thinkforge-purple/10">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-thinkforge-purple text-white text-xs">
-                      {user?.email ? getInitials(user.email) : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">{user?.email?.split('@')[0]}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="flex items-center space-x-2 text-red-600 focus:text-red-600"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="flex space-x-2">
-              <Link to="/login">
-                <Button variant="outline" className="text-sm border-thinkforge-purple/50 hover:border-thinkforge-purple hover:bg-thinkforge-purple/10">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="text-sm bg-thinkforge-purple hover:bg-thinkforge-purple/90">
-                  Sign Up
-                </Button>
-              </Link>
-            </div>
-          )}
-        </nav>
-
-        {/* Mobile Navigation Toggle */}
-        <button 
-          className="md:hidden text-white" 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+  const drawer = (
+    <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
+        <BrainIcon sx={{ mr: 1, color: 'primary.main' }} />
+        <Typography variant="h6" fontWeight="bold" sx={{ background: 'linear-gradient(to right, #861aff, #c87eff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          ThinkForge
+        </Typography>
+      </Box>
+      <Divider />
+      <List>
+        {navItems.map((item) => (
+          <ListItem key={item.path} disablePadding>
+            <ListItemButton
+              component={RouterLink}
+              to={item.path}
+              sx={{
+                textAlign: 'left',
+                '&:hover': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.name} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+      
+      <Divider sx={{ my: 1 }} />
+      
+      <Box sx={{ p: 2 }}>
+        <Button 
+          variant="outlined"
+          startIcon={mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          onClick={toggleColorMode}
+          fullWidth
+          sx={{ mb: 1 }}
         >
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
+          {mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        </Button>
+        
+        {isAuthenticated ? (
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<LogoutIcon />}
+            onClick={handleSignOut}
+            fullWidth
+          >
+            Sign Out
+          </Button>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="outlined"
+              fullWidth
+            >
+              Login
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/signup"
+              variant="contained"
+              fullWidth
+            >
+              Sign Up
+            </Button>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
 
-      {/* Mobile Navigation Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden glass-dark absolute top-full left-0 right-0 p-4 animate-fade-in">
-          <nav className="flex flex-col space-y-4">
-            <Link 
-              to="/" 
-              className="text-sm py-2 px-4 hover:bg-thinkforge-purple/10 rounded-md transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/chat" 
-              className="text-sm py-2 px-4 hover:bg-thinkforge-purple/10 rounded-md transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              AI Chat
-            </Link>
-            <Link 
-              to="/mcq-quiz" 
-              className="text-sm py-2 px-4 hover:bg-thinkforge-purple/10 rounded-md transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              MCQ Quiz
-            </Link>
-            <Link 
-              to="/progress" 
-              className="text-sm py-2 px-4 hover:bg-thinkforge-purple/10 rounded-md transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Progress
-            </Link>
-            
-            {/* Conditional Mobile Authentication Section */}
-            {isAuthenticated ? (
-              <div className="pt-2 border-t border-thinkforge-purple/20">
-                <div className="flex items-center space-x-3 py-2 px-4 mb-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-thinkforge-purple text-white text-xs">
+  return (
+    <>
+      <AppBar position="fixed" color="default" elevation={1} sx={{ 
+        bgcolor: mode === 'dark' ? 'background.paper' : 'white',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}>
+        <Container maxWidth="xl">
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+            {/* Mobile menu icon */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+              <IconButton
+                size="large"
+                aria-label="menu"
+                onClick={handleDrawerToggle}
+                color="inherit"
+              >
+                <MenuIcon />
+              </IconButton>
+            </Box>
+
+            {/* Logo */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <BrainIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1, color: 'primary.main' }} />
+              <Typography
+                variant="h6"
+                noWrap
+                component={RouterLink}
+                to="/"
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  fontWeight: 700,
+                  background: 'linear-gradient(to right, #861aff, #c87eff)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textDecoration: 'none',
+                }}
+              >
+                ThinkForge
+              </Typography>
+              
+              {/* Mobile Logo */}
+              <Typography
+                variant="h6"
+                noWrap
+                component={RouterLink}
+                to="/"
+                sx={{
+                  display: { xs: 'flex', md: 'none' },
+                  flexGrow: 1,
+                  fontWeight: 700,
+                  background: 'linear-gradient(to right, #861aff, #c87eff)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textDecoration: 'none',
+                }}
+              >
+                ThinkForge
+              </Typography>
+            </Box>
+
+            {/* Desktop Navigation */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+              {navItems.map((item) => (
+                <Button
+                  key={item.path}
+                  component={RouterLink}
+                  to={item.path}
+                  sx={{ 
+                    color: 'text.primary', 
+                    mx: 1,
+                    '&:hover': { color: 'primary.main' }
+                  }}
+                >
+                  {item.name}
+                </Button>
+              ))}
+              
+              {/* Theme Toggle Button */}
+              <IconButton onClick={toggleColorMode} sx={{ ml: 1 }}>
+                {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+              
+              {/* User Menu */}
+              {isAuthenticated ? (
+                <Box>
+                  <IconButton onClick={handleOpenUserMenu}>
+                    <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
                       {user?.email ? getInitials(user.email) : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{user?.email?.split('@')[0]}</span>
-                    <span className="text-xs text-foreground/60">{user?.email}</span>
-                  </div>
-                </div>
-                <Link 
-                  to="/profile" 
-                  className="flex items-center space-x-2 text-sm py-2 px-4 hover:bg-thinkforge-purple/10 rounded-md transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-                <Link 
-                  to="/settings" 
-                  className="flex items-center space-x-2 text-sm py-2 px-4 hover:bg-thinkforge-purple/10 rounded-md transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-                <button 
-                  className="flex items-center space-x-2 w-full text-sm py-2 px-4 hover:bg-red-500/10 rounded-md transition-colors text-red-600"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-2 pt-2 border-t border-thinkforge-purple/20">
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full text-sm border-thinkforge-purple/50 hover:border-thinkforge-purple hover:bg-thinkforge-purple/10">
+                    </Avatar>
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorElUser}
+                    open={Boolean(anchorElUser)}
+                    onClose={handleCloseUserMenu}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                  >
+                    <MenuItem component={RouterLink} to="/profile">
+                      <ListItemIcon>
+                        <UserIcon fontSize="small" />
+                      </ListItemIcon>
+                      <Typography>Profile</Typography>
+                    </MenuItem>
+                    <MenuItem component={RouterLink} to="/settings">
+                      <ListItemIcon>
+                        <SettingsIcon fontSize="small" />
+                      </ListItemIcon>
+                      <Typography>Settings</Typography>
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem onClick={handleSignOut} sx={{ color: 'error.main' }}>
+                      <ListItemIcon>
+                        <LogoutIcon fontSize="small" color="error" />
+                      </ListItemIcon>
+                      <Typography>Sign Out</Typography>
+                    </MenuItem>
+                  </Menu>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', ml: 2 }}>
+                  <Button 
+                    component={RouterLink} 
+                    to="/login" 
+                    variant="outlined" 
+                    sx={{ mr: 1 }}
+                  >
                     Login
                   </Button>
-                </Link>
-                <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full text-sm bg-thinkforge-purple hover:bg-thinkforge-purple/90">
+                  <Button 
+                    component={RouterLink} 
+                    to="/signup" 
+                    variant="contained"
+                  >
                     Sign Up
                   </Button>
-                </Link>
-              </div>
-            )}
-          </nav>
-        </div>
-      )}
-    </header>
+                </Box>
+              )}
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+      
+      {/* Mobile Navigation Drawer */}
+      <Drawer
+        container={document.body}
+        variant="temporary"
+        open={drawerOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true, // Better mobile performance
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { width: 280 },
+        }}
+      >
+        {drawer}
+      </Drawer>
+    </>
   );
 };
 

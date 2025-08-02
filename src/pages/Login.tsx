@@ -1,32 +1,67 @@
-
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import Layout from '@/components/layout/Layout';
-import { useAuth } from '@/contexts/AuthContext';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Paper,
+  InputAdornment,
+  IconButton,
+  Divider,
+  Grid,
+  Link,
+  useTheme
+} from '@mui/material';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import GoogleIcon from '@mui/icons-material/Google';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import Layout from '@/components/layout/Layout';
 
-const Login = () => {
+const MaterialLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();
+  const theme = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
-  useEffect(() => {
-    document.body.style.background = '#0a0a0a';
-    return () => {
-      document.body.style.background = '';
-    };
-  }, []);
+  const validateForm = () => {
+    let isValid = true;
+    
+    // Simple email validation
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Please enter a valid email address');
+      isValid = false;
+    } else {
+      setEmailError('');
+    }
+    
+    // Simple password validation
+    if (!password) {
+      setPasswordError('Please enter your password');
+      isValid = false;
+    } else {
+      setPasswordError('');
+    }
+    
+    return isValid;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setIsLoading(true);
     
     const success = await signIn(email, password);
@@ -36,6 +71,8 @@ const Login = () => {
       const locationState = location.state as { from?: { pathname: string } } | null;
       const from = locationState?.from?.pathname || '/chat';
       navigate(from, { replace: true });
+    } else {
+      setPasswordError('Invalid email or password');
     }
     
     setIsLoading(false);
@@ -43,106 +80,150 @@ const Login = () => {
 
   return (
     <Layout>
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-10 bg-crow relative">
-        <div className="absolute -top-10 -left-20 w-64 h-64 bg-flame-gradient blur-3xl opacity-20 -z-10 transform rotate-12"></div>
-        <div className="absolute top-40 -right-20 w-80 h-80 bg-flame-gradient blur-3xl opacity-10 -z-10 transform -rotate-12"></div>
-        
-        <motion.div 
-          className="w-full max-w-md px-4"
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="border border-flamePurple bg-glass backdrop-blur-sm p-8 font-mono text-white">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-flame-gradient tracking-tight">Welcome Back</h1>
-              <p className="text-sm text-white/70">
-                Login to continue your learning journey
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="yourname@example.com"
-                    className="pl-10 bg-crow/50 border-flamePurple/30 focus:border-flamePurple text-white"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="password" className="text-white">Password</Label>
-                  <Link 
-                    to="/forgot-password" 
-                    className="text-xs text-flamePurple hover:text-flamePurple-light"
-                  >
-                    Forgot Password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10 bg-crow/50 border-flamePurple/30 focus:border-flamePurple text-white"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-3 text-white/50 hover:text-white"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full bg-flamePurple hover:bg-flamePurple-light text-white rounded-none"
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: 4, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              borderRadius: 2,
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Decorative background element */}
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                top: -100,
+                right: -100,
+                width: 200,
+                height: 200,
+                borderRadius: '50%',
+                background: theme.palette.primary.main,
+                opacity: 0.1,
+                zIndex: 0
+              }} 
+            />
+            
+            <Typography component="h1" variant="h5" sx={{ mb: 3, fontWeight: 600, position: 'relative', zIndex: 1 }}>
+              Welcome Back
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, position: 'relative', zIndex: 1 }}>
+              Login to continue your learning journey
+            </Typography>
+            
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', position: 'relative', zIndex: 1 }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={!!emailError}
+                helperText={emailError}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!passwordError}
+                helperText={passwordError}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                <Link component={RouterLink} to="/forgot-password" variant="body2">
+                  Forgot password?
+                </Link>
+              </Box>
+              
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2, py: 1.5 }}
                 disabled={isLoading}
               >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
-
-              <div className="relative flex items-center justify-center mt-6">
-                <div className="border-t border-flamePurple/20 absolute w-full"></div>
-                <span className="bg-crow px-4 z-10 text-xs text-white/50">OR CONTINUE WITH</span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3">
-                <Button variant="outline" className="bg-crow/50 border-flamePurple/30 hover:border-flamePurple/50 hover:bg-crow/70 text-white">
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4 mr-2" />
-                  Google
-                </Button>
-              </div>
-
-              <div className="text-center mt-6">
-                <p className="text-sm text-white/70">
-                  Don't have an account?{" "}
-                  <Link to="/signup" className="text-flamePurple hover:text-flamePurple-light">
-                    Sign up
-                  </Link>
-                </p>
-              </div>
-            </form>
-          </div>
+              
+              <Box sx={{ position: 'relative', my: 3 }}>
+                <Divider>
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                    OR CONTINUE WITH
+                  </Typography>
+                </Divider>
+              </Box>
+              
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<GoogleIcon />}
+                sx={{ mb: 2, py: 1.5 }}
+              >
+                Google
+              </Button>
+              
+              <Grid container justifyContent="center">
+                <Grid item>
+                  <Typography variant="body2">
+                    Don't have an account?{" "}
+                    <Link component={RouterLink} to="/signup">
+                      Sign up
+                    </Link>
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
         </motion.div>
-      </div>
+      </Container>
     </Layout>
   );
 };
 
-export default Login;
+export default MaterialLogin;

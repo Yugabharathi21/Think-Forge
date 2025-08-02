@@ -1,74 +1,117 @@
 
-import { Link } from 'react-router-dom';
-import { BrainCircuit, Github, Twitter } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
+import { 
+  Box, 
+  Container, 
+  Grid, 
+  Typography, 
+  Link, 
+  Divider, 
+  IconButton,
+  useTheme
+} from '@mui/material';
+import BrainIcon from '@mui/icons-material/Psychology';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
 
 const Footer = () => {
+  const theme = useTheme();
+  const { mode } = useAppTheme();
+  
   return (
-    <footer className="w-full glass-dark py-8 mt-20">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="flex flex-col space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <BrainCircuit className="h-6 w-6 text-thinkforge-purple" />
-              <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-thinkforge-purple to-thinkforge-violet">
-                ThinkForge
-              </span>
-            </Link>
-            <p className="text-sm text-foreground/70">
-              Identify and improve your academic weak areas through AI-powered interactive quizzes.
-            </p>
-            <div className="flex space-x-4 pt-2">
-              <a href="#" className="text-foreground/70 hover:text-thinkforge-purple transition-colors">
-                <Github size={18} />
-              </a>
-              <a href="#" className="text-foreground/70 hover:text-thinkforge-purple transition-colors">
-                <Twitter size={18} />
-              </a>
-            </div>
-          </div>
+    <Box 
+      component="footer" 
+      sx={{ 
+        py: 6, 
+        mt: 10,
+        bgcolor: mode === 'dark' ? 'background.paper' : 'grey.100',
+        borderTop: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
+      <Container>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', mb: 2 }}>
+                <BrainIcon sx={{ color: 'primary.main', mr: 1 }} />
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    background: 'linear-gradient(to right, #861aff, #c87eff)', 
+                    WebkitBackgroundClip: 'text', 
+                    WebkitTextFillColor: 'transparent',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ThinkForge
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Identify and improve your academic weak areas through AI-powered interactive quizzes.
+              </Typography>
+              <Box>
+                <IconButton aria-label="GitHub" size="small" color="inherit">
+                  <GitHubIcon fontSize="small" />
+                </IconButton>
+                <IconButton aria-label="Twitter" size="small" color="inherit" sx={{ ml: 1 }}>
+                  <TwitterIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          </Grid>
 
-          <div className="flex flex-col space-y-2">
-            <h3 className="text-sm font-medium mb-2 text-thinkforge-violet">Product</h3>
-            <Link to="/features" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography variant="subtitle2" color="primary" fontWeight="medium" gutterBottom>
+              Product
+            </Typography>
+            <Link component={RouterLink} to="/features" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Features
             </Link>
-            <Link to="/pricing" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+            <Link component={RouterLink} to="/pricing" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Pricing
             </Link>
-            <Link to="/testimonials" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+            <Link component={RouterLink} to="/testimonials" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Testimonials
             </Link>
-          </div>
+          </Grid>
 
-          <div className="flex flex-col space-y-2">
-            <h3 className="text-sm font-medium mb-2 text-thinkforge-violet">Resources</h3>
-            <Link to="/blog" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography variant="subtitle2" color="primary" fontWeight="medium" gutterBottom>
+              Resources
+            </Typography>
+            <Link component={RouterLink} to="/blog" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Blog
             </Link>
-            <Link to="/faq" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+            <Link component={RouterLink} to="/faq" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               FAQ
             </Link>
-            <Link to="/support" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+            <Link component={RouterLink} to="/support" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Support
             </Link>
-          </div>
+          </Grid>
 
-          <div className="flex flex-col space-y-2">
-            <h3 className="text-sm font-medium mb-2 text-thinkforge-violet">Legal</h3>
-            <Link to="/privacy" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+          <Grid item xs={12} sm={6} md={2}>
+            <Typography variant="subtitle2" color="primary" fontWeight="medium" gutterBottom>
+              Legal
+            </Typography>
+            <Link component={RouterLink} to="/privacy" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Privacy
             </Link>
-            <Link to="/terms" className="text-sm text-foreground/70 hover:text-thinkforge-purple transition-colors">
+            <Link component={RouterLink} to="/terms" color="text.secondary" sx={{ display: 'block', mt: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
               Terms
             </Link>
-          </div>
-        </div>
+          </Grid>
+        </Grid>
 
-        <div className="border-t border-white/10 mt-8 pt-8 text-center text-xs text-foreground/50">
-          © {new Date().getFullYear()} ThinkForge. All rights reserved.
-        </div>
-      </div>
-    </footer>
+        <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider', textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            © {new Date().getFullYear()} ThinkForge. All rights reserved.
+          </Typography>
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

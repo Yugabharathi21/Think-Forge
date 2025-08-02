@@ -1,325 +1,300 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Brain, LineChart, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Layout from '@/components/layout/Layout';
+import { Link as RouterLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Grid,
+  Typography,
+  useTheme,
+  styled,
+  Link,
+  Divider,
+  Paper
+} from '@mui/material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import ChatIcon from '@mui/icons-material/Chat';
+import QuizIcon from '@mui/icons-material/Quiz';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SchoolIcon from '@mui/icons-material/School';
+import SettingsIcon from '@mui/icons-material/Settings';
+
+import Layout from '@/components/layout/Layout';
+import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
+
+// Styled components
+const HeroContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  overflow: 'hidden',
+  paddingTop: theme.spacing(12),
+  paddingBottom: theme.spacing(12),
+  [theme.breakpoints.up('md')]: {
+    paddingTop: theme.spacing(20),
+    paddingBottom: theme.spacing(20),
+  },
+}));
+
+const FeatureCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-8px)',
+    boxShadow: theme.palette.mode === 'light' 
+      ? '0 10px 30px rgba(0,0,0,0.1)' 
+      : '0 10px 30px rgba(0,0,0,0.3)',
+  },
+}));
+
+const IconBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 60,
+  height: 60,
+  borderRadius: '12px',
+  marginBottom: theme.spacing(2),
+  backgroundColor: theme.palette.mode === 'light' 
+    ? theme.palette.primary.light + '30' // Adding transparency
+    : theme.palette.primary.dark + '50', 
+}));
 
 const Home = () => {
-  useEffect(() => {
-    document.body.style.background = '#0a0a0a';
-    document.body.style.overflowX = 'hidden';
-    return () => {
-      document.body.style.background = '';
-    };
-  }, []);
+  const theme = useTheme();
+  const { mode } = useAppTheme();
+  
+  const features = [
+    {
+      title: "AI Learning Companion",
+      description: "Engage in dynamic conversations with an AI tutor that adapts to your learning style and pace.",
+      icon: <ChatIcon fontSize="large" color="primary" />,
+      link: "/chat"
+    },
+    {
+      title: "Interactive Quizzes",
+      description: "Test your knowledge with adaptive multiple-choice questions that challenge your understanding.",
+      icon: <QuizIcon fontSize="large" color="primary" />,
+      link: "/mcq-quiz"
+    },
+    {
+      title: "Progress Tracking",
+      description: "Monitor your improvement over time with detailed analytics and personalized feedback.",
+      icon: <BarChartIcon fontSize="large" color="primary" />,
+      link: "/progress"
+    },
+    {
+      title: "Customizable Subjects",
+      description: "Choose from a wide range of subjects and topics tailored to your interests and educational goals.",
+      icon: <SchoolIcon fontSize="large" color="primary" />,
+      link: "/chat"
+    },
+    {
+      title: "Multiple Learning Modes",
+      description: "Switch between different learning modes to reinforce concepts through varied approaches.",
+      icon: <SettingsIcon fontSize="large" color="primary" />,
+      link: "/chat"
+    },
+    {
+      title: "Instant Feedback",
+      description: "Receive immediate explanations and corrections to strengthen your understanding of concepts.",
+      icon: <PsychologyIcon fontSize="large" color="primary" />,
+      link: "/chat"
+    }
+  ];
   
   return (
     <Layout>
       {/* Hero Section */}
-      <motion.section
-        className="relative py-20 md:py-28 overflow-hidden text-white font-mono"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="absolute top-0 left-0 w-full h-full">
-          <motion.div
-            className="absolute top-1/3 left-1/4 w-96 h-96 bg-flamePurple-dark/30"
-            animate={{ 
-              rotate: [0, 90],
-              x: [0, 20, 0],
-            }}
-            transition={{ 
-              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-              x: { duration: 10, repeat: Infinity, ease: "easeInOut" }
-            }}
-          />
-          <motion.div
-            className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-flamePurple/20"
-            animate={{ 
-              rotate: [0, -90],
-              y: [0, -20, 0],
-            }}
-            transition={{ 
-              rotate: { duration: 15, repeat: Infinity, ease: "linear" },
-              y: { duration: 8, repeat: Infinity, ease: "easeInOut" }
-            }}
-          />
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4">
-          <motion.div 
-            className="absolute inset-0 w-[600px] h-[600px] mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-          >
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-flamePurple/20" />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-flamePurple/10" />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-flamePurple/5" />
-          </motion.div>
-
-          <motion.h1
-            className="text-4xl md:text-6xl font-bold leading-tight mb-6 tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Enhance Your Learning with
-            <span className="block mt-2 text-transparent bg-clip-text bg-flame-gradient">
-              AI-Powered Insights
-            </span>
-          </motion.h1>
-
-          <motion.p
-            className="text-lg md:text-xl text-white/70 mb-10 max-w-2xl tracking-wide"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            ThinkForge helps students identify and improve weak academic areas through interactive quizzes and real-time AI-powered feedback.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <Link to="/signup">
-              <Button className="bg-flamePurple hover:bg-flamePurple-light px-8 py-6 text-base rounded-none">
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/chat">
-              <Button variant="outline" className="border-flamePurple/50 hover:border-flamePurple hover:bg-flamePurple/10 px-8 py-6 text-base rounded-none">
-                Try Demo
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </motion.section>
+      <HeroContainer>
+        <Container maxWidth="lg">
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <Box sx={{ position: 'relative' }}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <Typography 
+                    component="h1"
+                    variant="h2"
+                    fontWeight="700"
+                    gutterBottom
+                  >
+                    Think-Forge
+                    <Box 
+                      component="span" 
+                      sx={{ 
+                        color: 'primary.main', 
+                        display: 'inline-block',
+                        ml: 1
+                      }}
+                    >
+                      AI
+                    </Box>
+                  </Typography>
+                  
+                  <Typography 
+                    variant="h5" 
+                    color="text.secondary" 
+                    paragraph
+                    sx={{ mb: 4, maxWidth: '90%' }}
+                  >
+                    Unlock deeper learning through AI-powered conversations. Master concepts, challenge your understanding, and track your progress.
+                  </Typography>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.8 }}
+                  >
+                    <Button
+                      component={RouterLink}
+                      to="/chat"
+                      variant="contained"
+                      size="large"
+                      endIcon={<ArrowForwardIcon />}
+                    >
+                      Start Learning
+                    </Button>
+                    
+                    <Button
+                      component={RouterLink}
+                      to="/signup"
+                      variant="outlined"
+                      size="large"
+                      sx={{ ml: 2 }}
+                    >
+                      Sign Up
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Box sx={{ position: 'relative' }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1 }}
+                >
+                  <Paper 
+                    elevation={6}
+                    sx={{ 
+                      overflow: 'hidden',
+                      height: '400px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: mode === 'light' ? 'primary.light' : 'background.paper',
+                      border: `1px solid ${theme.palette.divider}`,
+                      position: 'relative',
+                    }}
+                  >
+                    {/* This would be a custom illustration or animation */}
+                    <Box sx={{ 
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      opacity: 0.1,
+                      background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.secondary.light} 100%)`,
+                    }} />
+                    
+                    <PsychologyIcon sx={{ fontSize: 120, opacity: 0.3, color: 'primary.main' }} />
+                  </Paper>
+                </motion.div>
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </HeroContainer>
 
       {/* Features Section */}
-      <motion.section
-        className="py-20 bg-glass backdrop-blur-sm text-white font-mono"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true, margin: '-100px' }}
-      >
-        <div className="text-center mb-16">
-          <motion.h2
-            className="text-3xl md:text-4xl font-bold mb-4 tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-transparent bg-clip-text bg-flame-gradient">
-              Key Features
-            </span>
-          </motion.h2>
-          <motion.p
-            className="text-white/70 max-w-2xl mx-auto tracking-wide"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Designed to revolutionize the way students learn and improve their academic performance
-          </motion.p>
-        </div>
+      <Box sx={{ py: 8, bgcolor: mode === 'light' ? 'grey.50' : 'background.paper' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h3" component="h2" gutterBottom>
+              Features
+            </Typography>
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ maxWidth: '700px', mx: 'auto' }}
+            >
+              Personalized learning tools designed to enhance your understanding
+            </Typography>
+          </Box>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-          <motion.div
-            className="border border-border bg-glass backdrop-blur-sm p-8 flex flex-col items-center text-center group hover:border-flamePurple/50 transition-all duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
-          >
-            <div className="w-16 h-16 border border-flamePurple flex items-center justify-center mb-6">
-              <Brain className="h-8 w-8 text-flamePurple-light" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 tracking-tight">AI Chatbot for Quizzes</h3>
-            <p className="text-sm text-white/70">
-              Engage in real-time Q&A with an intelligent AI that evaluates responses and offers personalized feedback.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="border border-border bg-glass backdrop-blur-sm p-8 flex flex-col items-center text-center group hover:border-flamePurple/50 transition-all duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <div className="w-16 h-16 border border-flamePurple flex items-center justify-center mb-6">
-              <LineChart className="h-8 w-8 text-flamePurple-light" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 tracking-tight">Progress Tracking</h3>
-            <p className="text-sm text-white/70">
-              Dynamic visual charts to showcase strengths and areas for improvement with detailed performance analytics.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="border border-border bg-glass backdrop-blur-sm p-8 flex flex-col items-center text-center group hover:border-flamePurple/50 transition-all duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div className="w-16 h-16 border border-flamePurple flex items-center justify-center mb-6">
-              <Zap className="h-8 w-8 text-flamePurple-light" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 tracking-tight">Seamless Experience</h3>
-            <p className="text-sm text-white/70">
-              Lightning-fast performance, smooth animations, and an ultra-responsive interface optimized for all devices.
-            </p>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* How It Works */}
-      <motion.section
-        className="py-20 text-white font-mono"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true, margin: '-100px' }}
-      >
-        <div className="text-center mb-16">
-          <motion.h2
-            className="text-3xl md:text-4xl font-bold mb-4 tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-transparent bg-clip-text bg-flame-gradient">
-              How It Works
-            </span>
-          </motion.h2>
-          <motion.p
-            className="text-white/70 max-w-2xl mx-auto tracking-wide"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Simple steps to improve your academic performance
-          </motion.p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-          <div className="relative">
-            <div className="border border-border bg-glass backdrop-blur-sm p-8">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-flamePurple flex items-center justify-center font-bold text-white">1</div>
-              <motion.h3
-                className="text-xl font-semibold mb-3 mt-4 tracking-tight"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                Take Interactive Quizzes
-              </motion.h3>
-              <motion.p
-                className="text-sm text-white/70"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                Engage with our AI-powered quiz system that adapts to your knowledge level and learning style.
-              </motion.p>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="border border-border bg-glass backdrop-blur-sm p-8">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-flamePurple flex items-center justify-center font-bold text-white">2</div>
-              <motion.h3
-                className="text-xl font-semibold mb-3 mt-4 tracking-tight"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                Receive Real-time Feedback
-              </motion.h3>
-              <motion.p
-                className="text-sm text-white/70"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                Get instant analysis and personalized suggestions to improve your understanding of difficult concepts.
-              </motion.p>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="border border-border bg-glass backdrop-blur-sm p-8">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-flamePurple flex items-center justify-center font-bold text-white">3</div>
-              <motion.h3
-                className="text-xl font-semibold mb-3 mt-4 tracking-tight"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                Track Your Progress
-              </motion.h3>
-              <motion.p
-                className="text-sm text-white/70"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                Visualize your improvement over time with detailed charts and analytics that highlight your growth.
-              </motion.p>
-            </div>
-          </div>
-        </div>
-      </motion.section>
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.6 }}
+                >
+                  <FeatureCard>
+                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      <IconBox>
+                        {feature.icon}
+                      </IconBox>
+                      <Typography variant="h6" component="h3" gutterBottom>
+                        {feature.title}
+                      </Typography>
+                      <Typography color="text.secondary" paragraph sx={{ mb: 2, flexGrow: 1 }}>
+                        {feature.description}
+                      </Typography>
+                      <Link 
+                        component={RouterLink} 
+                        to={feature.link}
+                        color="primary"
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center',
+                          mt: 'auto',
+                          fontWeight: 500,
+                          '&:hover': { textDecoration: 'none' }
+                        }}
+                      >
+                        Learn More
+                        <ArrowForwardIcon fontSize="small" sx={{ ml: 0.5 }} />
+                      </Link>
+                    </CardContent>
+                  </FeatureCard>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
 
       {/* CTA Section */}
-      <motion.section
-        className="py-16 md:py-24"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true, margin: '-100px' }}
-      >
-        <div className="border border-flamePurple bg-glass backdrop-blur-sm p-12 max-w-4xl mx-auto text-center">
-          <motion.h2
-            className="text-2xl md:text-3xl font-bold mb-6 tracking-tight text-white"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+      <Box sx={{ py: 10, textAlign: 'center' }}>
+        <Container maxWidth="md">
+          <Typography variant="h3" component="h2" gutterBottom>
+            Ready to Transform Your Learning?
+          </Typography>
+          <Typography variant="h6" color="text.secondary" paragraph sx={{ mb: 4 }}>
+            Join Think-Forge today and experience a new way to learn, challenge yourself, and grow
+          </Typography>
+          <Button 
+            component={RouterLink} 
+            to="/signup" 
+            variant="contained" 
+            size="large"
           >
-            Ready to transform your learning experience?
-          </motion.h2>
-          <motion.p
-            className="text-white/70 mb-8 max-w-xl mx-auto tracking-wide"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Join thousands of students who are already improving their academic performance with ThinkForge.
-          </motion.p>
-          <motion.div
-            className="flex flex-col sm:flex-row justify-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <Link to="/signup">
-              <Button className="bg-flamePurple hover:bg-flamePurple-light px-8 py-6 text-base rounded-none">
-                Start Learning Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </motion.section>
+            Get Started
+          </Button>
+        </Container>
+      </Box>
     </Layout>
   );
 };

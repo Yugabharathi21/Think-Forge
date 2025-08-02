@@ -1,8 +1,10 @@
 
 import { ReactNode } from 'react';
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Box, Container, CssBaseline } from '@mui/material';
 import Header from './Header';
 import Footer from './Footer';
+import { ThemeProvider as MUIThemeProvider } from '@mui/material';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,16 +12,17 @@ interface LayoutProps {
 }
 
 const Layout = ({ children, hideFooter = false }: LayoutProps) => {
+  const { mode } = useTheme();
+  
   return (
-    <TooltipProvider>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow pt-24 px-4 container mx-auto">
-          {children}
-        </main>
-        {!hideFooter && <Footer />}
-      </div>
-    </TooltipProvider>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <CssBaseline />
+      <Header />
+      <Container component="main" sx={{ flexGrow: 1, pt: 12, px: { xs: 2, sm: 3, md: 4 } }}>
+        {children}
+      </Container>
+      {!hideFooter && <Footer />}
+    </Box>
   );
 };
 

@@ -1,8 +1,8 @@
 
 import { useState, FormEvent, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Box, Paper, TextField, IconButton, useTheme } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -17,6 +17,8 @@ const ChatInput = ({
 }: ChatInputProps) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const theme = useTheme();
+  const { mode } = useAppTheme();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -41,27 +43,53 @@ const ChatInput = ({
   }, []);
 
   return (
-    <form onSubmit={handleSubmit} className="glass-card neon-border rounded-xl p-3">
-      <div className="flex items-end">
-        <Textarea
-          ref={textareaRef}
+    <Paper
+      component="form"
+      onSubmit={handleSubmit}
+      elevation={2}
+      sx={{ 
+        p: 1.5, 
+        borderRadius: 3,
+        bgcolor: mode === 'dark' ? 'rgba(30,30,30,0.6)' : 'rgba(255,255,255,0.9)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
+        <TextField
+          inputRef={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm min-h-[60px]"
+          multiline
+          maxRows={4}
+          fullWidth
           disabled={disabled}
+          variant="standard"
+          InputProps={{
+            disableUnderline: true,
+            sx: { 
+              fontSize: '0.875rem',
+              minHeight: '60px',
+              bgcolor: 'transparent',
+              '& .MuiInputBase-input': {
+                p: 1,
+              }
+            }
+          }}
         />
-        <Button 
+        <IconButton 
           type="submit" 
-          size="icon" 
+          color="primary" 
           disabled={!message.trim() || disabled}
-          className="ml-2 bg-thinkforge-purple hover:bg-thinkforge-purple/90 flex-shrink-0"
+          sx={{ ml: 1, flexShrink: 0 }}
         >
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
-    </form>
+          <SendIcon sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Box>
+    </Paper>
   );
 };
 
