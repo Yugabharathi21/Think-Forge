@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Brain, ArrowRight, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Button, Box, Typography, useTheme } from '@mui/material';
 import Layout from '@/components/layout/Layout';
 import ChatMessage from '@/components/chat/ChatMessage';
 import ChatInput from '@/components/chat/ChatInput';
@@ -14,6 +14,7 @@ import { Message } from '@/features/chat/types';
 import { generateChatResponse } from '@/lib/ollama';
 import { chatService } from '@/lib/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -217,9 +218,16 @@ const Chat = () => {
     }
   };
 
+  const theme = useTheme();
+  const { mode } = useAppTheme();
+
   return (
     <Layout hideFooter={true}>
-      <div className="flex flex-col h-[calc(100vh-120px)]">
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: 'calc(100vh - 120px)'
+      }}>
         {/* Header */}
         <ChatHeader />
 
@@ -227,8 +235,17 @@ const Chat = () => {
         <ChatTips />
 
         {/* Chat Messages */}
-        <div className="flex-grow overflow-y-auto mb-4 pr-1">
-          <div className="space-y-4">
+        <Box sx={{ 
+          flexGrow: 1, 
+          overflowY: 'auto',
+          mb: 4,
+          pr: 1
+        }}>
+          <Box sx={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4
+          }}>
             {messages.map((message) => (
               <ChatMessage 
                 key={message.id} 
@@ -241,39 +258,68 @@ const Chat = () => {
             
             {isWaitingForAI && <TypingIndicator />}
             <div ref={messagesEndRef} />
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Subject Selection Chips (only show if no subject selected) */}
         {!selectedSubject && !isWaitingForAI && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium mb-2">Select a subject to begin learning:</h3>
-            <div className="flex flex-wrap gap-2">
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 500 }}>
+              Select a subject to begin learning:
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              gap: 1
+            }}>
               {subjects.map((subject) => (
                 <Button
                   key={subject}
-                  variant="outline"
-                  size="sm"
-                  className="glass-card"
+                  variant="outlined"
+                  size="small"
                   onClick={() => handleSendMessage(subject)}
+                  sx={{
+                    textTransform: 'none',
+                    borderColor: theme.palette.mode === 'dark' ? 'divider' : theme.palette.primary.main,
+                    color: theme.palette.mode === 'dark' ? 'text.primary' : theme.palette.primary.main,
+                    backdropFilter: 'blur(10px)',
+                    bgcolor: mode === 'dark' ? 'rgba(30,30,30,0.3)' : 'rgba(255,255,255,0.7)',
+                    '&:hover': {
+                      bgcolor: mode === 'dark' ? 'rgba(30,30,30,0.5)' : 'rgba(255,255,255,0.9)',
+                      borderColor: theme.palette.primary.main,
+                    }
+                  }}
                 >
                   {subject}
                 </Button>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {/* MCQ Quiz Link */}
         {selectedSubject && (
-          <div className="mb-4 text-center">
-            <Link to="/mcq-quiz">
-              <Button variant="link" className="text-sm">
-                <Brain className="mr-2 h-4 w-4" />
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Link to="/mcq-quiz" style={{ textDecoration: 'none' }}>
+              <Button
+                variant="text"
+                color="primary"
+                startIcon={<Brain style={{ fontSize: 18 }} />}
+                sx={{
+                  textTransform: 'none',
+                  color: theme.palette.primary.main,
+                  fontSize: '0.875rem',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: theme.palette.primary.dark,
+                    textDecoration: 'underline'
+                  }
+                }}
+              >
                 Want to test your knowledge? Try our MCQ Quiz
               </Button>
             </Link>
-          </div>
+          </Box>
         )}
 
         {/* Chat Input */}
@@ -286,7 +332,7 @@ const Chat = () => {
               : "Type your message here..."
           }
         />
-      </div>
+      </Box>
     </Layout>
   );
 };

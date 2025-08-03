@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Box, Button, Card, Paper, Typography, useTheme } from '@mui/material';
 import MCQOption from './MCQOption';
+import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
 
 export interface MCQQuestionData {
   id: string;
@@ -19,6 +20,8 @@ interface MCQQuestionProps {
 const MCQQuestion = ({ data, onAnswer, isAnswerSubmitted }: MCQQuestionProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const theme = useTheme();
+  const { mode } = useAppTheme();
   
   // Reset state when question changes
   useEffect(() => {
@@ -40,11 +43,27 @@ const MCQQuestion = ({ data, onAnswer, isAnswerSubmitted }: MCQQuestionProps) =>
   };
   
   return (
-    <div className="space-y-4 w-full">
-      <div className="glass-card p-4 rounded-xl">
-        <h3 className="mb-3 font-medium">{data.question}</h3>
+    <Box sx={{ width: '100%', mb: 2 }}>
+      <Card 
+        elevation={2} 
+        sx={{ 
+          borderRadius: 4,
+          p: 2,
+          backdropFilter: 'blur(10px)',
+          bgcolor: mode === 'dark' ? 'rgba(30,30,30,0.7)' : 'rgba(255,255,255,0.9)',
+          border: '1px solid',
+          borderColor: 'divider'
+        }}
+      >
+        <Typography 
+          variant="h6" 
+          component="h3" 
+          sx={{ mb: 2, fontWeight: 500, color: 'text.primary' }}
+        >
+          {data.question}
+        </Typography>
         
-        <div className="space-y-2">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {data.options.map((option, index) => (
             <MCQOption
               key={index}
@@ -56,27 +75,39 @@ const MCQQuestion = ({ data, onAnswer, isAnswerSubmitted }: MCQQuestionProps) =>
               disabled={showFeedback || isAnswerSubmitted}
             />
           ))}
-        </div>
+        </Box>
         
         {showFeedback && data.explanation && (
-          <div className="mt-4 p-3 bg-foreground/10 rounded-lg">
-            <p className="text-sm text-foreground/80">{data.explanation}</p>
-          </div>
+          <Paper 
+            elevation={0}
+            sx={{
+              mt: 2,
+              p: 2,
+              bgcolor: mode === 'dark' ? 'rgba(50,50,50,0.5)' : 'rgba(240,240,240,0.7)',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              {data.explanation}
+            </Typography>
+          </Paper>
         )}
         
         {!showFeedback && !isAnswerSubmitted && (
-          <div className="mt-4 flex justify-end">
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <Button 
-              className="bg-thinkforge-purple hover:bg-thinkforge-purple/90"
+              variant="contained"
+              color="primary"
               onClick={handleSubmit}
               disabled={selectedOption === null}
+              sx={{ px: 3 }}
             >
               Submit Answer
             </Button>
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Card>
+    </Box>
   );
 };
 

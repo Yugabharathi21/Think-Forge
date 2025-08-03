@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
+import { Button as ButtonUI } from '@/components/ui/button'; // Renamed to avoid conflicts
 import MCQQuestion from '@/components/chat/MCQQuestion';
 import { subjects } from '@/features/chat/constants';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,12 +15,17 @@ import { quizService, testDatabaseConnection } from '@/lib/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { MCQQuestionData } from '@/features/chat/types';
 import { motion } from 'framer-motion';
+// Material UI imports
+import { Box, Typography, Button, useTheme, Radio, RadioGroup as MUIRadioGroup, FormControlLabel, FormControl as MUIFormControl, FormLabel } from '@mui/material';
+import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
 
 const MCQQuiz = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const theme = useTheme();
+  const { mode } = useAppTheme();
   const [subject, setSubject] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -275,113 +280,234 @@ const MCQQuiz = () => {
   };
 
   useEffect(() => {
-    document.body.style.background = '#0a0a0a';
+    // Set background based on theme mode
+    document.body.style.background = mode === 'dark' ? '#0a0a0a' : '#f5f5f5';
     return () => {
       document.body.style.background = '';
     };
-  }, []);
+  }, [mode]);
   
   return (
     <Layout>
-      <div className="container mx-auto py-8 bg-crow relative">
-        <div className="absolute -top-10 -left-20 w-64 h-64 bg-flame-gradient blur-3xl opacity-20 -z-10 transform rotate-12"></div>
-        <div className="absolute top-40 -right-20 w-80 h-80 bg-flame-gradient blur-3xl opacity-10 -z-10 transform -rotate-12"></div>
+      <Box 
+        sx={{ 
+          maxWidth: '1200px',
+          mx: 'auto',
+          py: 4,
+          px: 2,
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Background effects */}
+        <Box 
+          sx={{ 
+            position: 'absolute',
+            top: -80,
+            left: -160,
+            width: '500px',
+            height: '500px',
+            background: 'linear-gradient(90deg, #861aff 0%, #ff8a00 100%)',
+            filter: 'blur(120px)',
+            opacity: '0.2',
+            transform: 'rotate(12deg)',
+            zIndex: -1
+          }}
+        />
+        <Box 
+          sx={{ 
+            position: 'absolute',
+            top: 160,
+            right: -160,
+            width: '600px',
+            height: '600px',
+            background: 'linear-gradient(90deg, #861aff 0%, #ff8a00 100%)',
+            filter: 'blur(120px)',
+            opacity: '0.1',
+            transform: 'rotate(-12deg)',
+            zIndex: -1
+          }}
+        />
         
         <motion.div 
-          className="border border-flamePurple bg-glass backdrop-blur-sm p-6 font-mono text-white"
+          style={{
+            border: `1px solid ${theme.palette.primary.main}40`,
+            borderRadius: theme.shape.borderRadius * 2,
+            padding: theme.spacing(3),
+            backdropFilter: 'blur(10px)',
+            backgroundColor: mode === 'dark' ? 'rgba(18,18,18,0.7)' : 'rgba(255,255,255,0.7)',
+          }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
-          <h1 className="text-2xl font-bold mb-6 text-center text-transparent bg-clip-text bg-flame-gradient tracking-tight">MCQ Quiz</h1>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            align="center" 
+            sx={{ 
+              mb: 4, 
+              fontWeight: 'bold',
+              background: 'linear-gradient(90deg, #861aff 0%, #ff8a00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.5px'
+            }}
+          >
+            MCQ Quiz
+          </Typography>
           
           {!subject && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-medium text-white tracking-tight">Choose a Subject</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                Choose a Subject
+              </Typography>
+              
+              <Box 
+                sx={{ 
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'repeat(2, 1fr)',
+                    lg: 'repeat(3, 1fr)'
+                  },
+                  gap: 2
+                }}
+              >
                 {subjects.map((subj) => (
                   <motion.div
                     key={subj}
                     whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.2 }}
+                    style={{ width: '100%' }}
                   >
                     <Button
-                      className={`border border-flamePurple/30 bg-glass backdrop-blur-sm h-auto p-4 flex items-center justify-between w-full ${
-                        subject === subj ? 'border-flamePurple' : ''
-                      }`}
-                      variant="outline"
+                      fullWidth
+                      variant="outlined"
                       onClick={() => handleSubjectSelection(subj)}
+                      sx={{
+                        p: 2,
+                        height: 'auto',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderRadius: 2,
+                        borderColor: subject === subj ? 'primary.main' : 'divider',
+                        borderWidth: subject === subj ? 2 : 1,
+                        backdropFilter: 'blur(10px)',
+                        backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(30,30,30,0.6)' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(40,40,40,0.7)' : 'rgba(245,245,245,0.9)',
+                          boxShadow: theme => `0 0 8px ${theme.palette.primary.main}`
+                        }
+                      }}
                     >
-                      <span className="text-white">{subj}</span>
-                      <Brain className="h-5 w-5 ml-2 text-flamePurple-light" />
+                      <Typography sx={{ color: 'text.primary', fontWeight: 500 }}>{subj}</Typography>
+                      <Brain sx={{ ml: 1, fontSize: 20, color: 'primary.main' }} />
                     </Button>
                   </motion.div>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
           
           {subject && !quizStarted && !quizCompleted && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-medium text-transparent bg-clip-text bg-flame-gradient tracking-tight">Ready to Start</h2>
-              <p className="text-white/80">
-                You have selected <span className="font-medium text-flamePurple-light">{subject}</span>. 
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 500,
+                  background: 'linear-gradient(90deg, #861aff 0%, #ff8a00 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.5px'
+                }}
+              >
+                Ready to Start
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                You have selected <Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>{subject}</Box>. 
                 This quiz will test your knowledge with AI-generated multiple-choice questions.
-              </p>
+              </Typography>
               
               {/* Difficulty Selection */}
-              <div className="space-y-3">
-                <Label className="text-base font-medium text-white">Select Difficulty Level</Label>
-                <RadioGroup 
-                  value={difficulty} 
-                  onValueChange={(value) => setDifficulty(value as 'easy' | 'medium' | 'hard')}
-                  className="flex space-x-6"
+              <MUIFormControl component="fieldset" sx={{ mt: 2, mb: 2 }}>
+                <FormLabel component="legend" sx={{ 
+                  color: 'text.primary', 
+                  fontWeight: 500,
+                  mb: 1 
+                }}>
+                  Select Difficulty Level
+                </FormLabel>
+                <MUIRadioGroup
+                  row
+                  name="difficulty"
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="easy" id="easy" className="text-flamePurple border-flamePurple" />
-                    <Label htmlFor="easy" className="text-white">Easy</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="medium" id="medium" className="text-flamePurple border-flamePurple" />
-                    <Label htmlFor="medium" className="text-white">Medium</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hard" id="hard" className="text-flamePurple border-flamePurple" />
-                    <Label htmlFor="hard" className="text-white">Hard</Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                  <FormControlLabel 
+                    value="easy" 
+                    control={<Radio color="primary" />} 
+                    label="Easy" 
+                    sx={{ color: 'text.primary' }}
+                  />
+                  <FormControlLabel 
+                    value="medium" 
+                    control={<Radio color="primary" />} 
+                    label="Medium" 
+                    sx={{ color: 'text.primary' }}
+                  />
+                  <FormControlLabel 
+                    value="hard" 
+                    control={<Radio color="primary" />} 
+                    label="Hard" 
+                    sx={{ color: 'text.primary' }}
+                  />
+                </MUIRadioGroup>
+              </MUIFormControl>
               
-              <div className="flex justify-center mt-6">
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                 <Button 
-                  className="bg-flamePurple hover:bg-flamePurple-light text-white rounded-none border border-flamePurple/20"
+                  variant="contained"
+                  color="primary"
                   onClick={startQuiz}
                   disabled={loading}
+                  sx={{
+                    py: 1,
+                    px: 3,
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    boxShadow: theme => `0 0 8px ${theme.palette.primary.main}80`
+                  }}
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 sx={{ mr: 1, fontSize: 18, animation: 'spin 1s linear infinite' }} />
                       Generating Questions...
                     </>
                   ) : (
                     <>
                       Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Quiz
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight sx={{ ml: 1, fontSize: 18 }} />
                     </>
                   )}
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
           
           {quizStarted && currentQuestion && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-medium">{subject} Quiz</h2>
-                <div className="text-sm font-medium">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center'
+              }}>
+                <Typography variant="h6" fontWeight={500} color="text.primary">{subject} Quiz</Typography>
+                <Typography variant="body2" fontWeight={500} color="text.secondary">
                   Question {currentQuestionIdx + 1} of {questions.length}
-                </div>
-              </div>
+                </Typography>
+              </Box>
               
               <MCQQuestion 
                 data={currentQuestion} 
@@ -390,177 +516,353 @@ const MCQQuiz = () => {
               />
               
               {mistakeAnalysis && (
-                <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <h3 className="font-medium text-red-500 mb-2">Mistake Analysis</h3>
-                  <p className="text-sm">{mistakeAnalysis}</p>
-                </div>
+                <Paper 
+                  elevation={0}
+                  sx={{
+                    mt: 1, 
+                    p: 2, 
+                    borderRadius: 2,
+                    bgcolor: mode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
+                    border: '1px solid',
+                    borderColor: mode === 'dark' ? 'rgba(211, 47, 47, 0.2)' : 'rgba(211, 47, 47, 0.15)'
+                  }}
+                >
+                  <Typography variant="subtitle2" color="error" mb={0.5}>Mistake Analysis</Typography>
+                  <Typography variant="body2">{mistakeAnalysis}</Typography>
+                </Paper>
               )}
               
-              <div className="flex justify-between items-center pt-4 border-t border-foreground/10">
-                <div className="text-sm">
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                pt: 2, 
+                borderTop: '1px solid',
+                borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+              }}>
+                <Typography variant="body2" fontWeight={500} color="text.primary">
                   Score: {score.correct}/{score.total}
-                </div>
+                </Typography>
                 
-                <div className="flex gap-2">
+                <Box sx={{ display: 'flex', gap: 2 }}>
                   {isAnswerSubmitted && !saving && (
                     <Button
-                      className="bg-thinkforge-purple hover:bg-thinkforge-purple/90"
+                      variant="contained"
+                      color="primary"
                       onClick={handleNextQuestion}
+                      sx={{
+                        textTransform: 'none',
+                        bgcolor: theme.palette.primary.main,
+                        color: theme.palette.primary.contrastText,
+                        '&:hover': {
+                          bgcolor: theme.palette.primary.dark,
+                        }
+                      }}
                     >
                       {currentQuestionIdx < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
                     </Button>
                   )}
                   {saving && (
-                    <Button disabled className="bg-thinkforge-purple/50">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Button 
+                      disabled 
+                      variant="contained"
+                      sx={{
+                        bgcolor: `${theme.palette.primary.main}80`,
+                        color: theme.palette.primary.contrastText,
+                      }}
+                    >
+                      <Loader2 sx={{ mr: 1, fontSize: 16, animation: 'spin 1s linear infinite' }} />
                       Saving Results...
                     </Button>
                   )}
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    color="primary"
                     onClick={exitQuiz}
                     disabled={saving}
+                    size="small"
+                    sx={{
+                      textTransform: 'none',
+                      borderColor: theme.palette.mode === 'dark' ? 'divider' : theme.palette.primary.main,
+                      color: theme.palette.mode === 'dark' ? 'text.primary' : theme.palette.primary.main,
+                    }}
                   >
                     Exit Quiz
                   </Button>
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           )}
           
           {quizCompleted && quizAnalysis && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">Quiz Results 🎯</h2>
-                <div className="text-3xl font-bold text-thinkforge-purple mb-4">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h5" fontWeight="bold" mb={1} color="text.primary">
+                  Quiz Results 🎯
+                </Typography>
+                <Typography 
+                  variant="h4" 
+                  fontWeight="bold" 
+                  color="primary.main" 
+                  mb={2}
+                >
                   {score.correct}/{questions.length} ({quizAnalysis.overallScore}%)
-                </div>
-              </div>
+                </Typography>
+              </Box>
 
               {/* Performance Analysis */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Box sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                gap: 3
+              }}>
                 {/* Strengths */}
                 {quizAnalysis.strongAreas.length > 0 && (
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-                    <h3 className="font-medium text-green-500 mb-2 flex items-center">
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Strong Areas
-                    </h3>
-                    <ul className="text-sm space-y-1">
+                  <Paper 
+                    elevation={0}
+                    sx={{
+                      p: 2, 
+                      borderRadius: 2,
+                      bgcolor: mode === 'dark' ? 'rgba(46, 125, 50, 0.1)' : 'rgba(46, 125, 50, 0.05)',
+                      border: '1px solid',
+                      borderColor: mode === 'dark' ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.15)'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <TrendingUp sx={{ mr: 1, color: 'success.main', fontSize: 18 }} />
+                      <Typography variant="subtitle2" color="success.main">
+                        Strong Areas
+                      </Typography>
+                    </Box>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
                       {quizAnalysis.strongAreas.map((area: string, index: number) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-green-500 mr-2">•</span>
+                        <Box 
+                          component="li" 
+                          key={index} 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start',
+                            mb: 0.5,
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <Box component="span" sx={{ color: 'success.main', mr: 1 }}>•</Box>
                           {area}
-                        </li>
+                        </Box>
                       ))}
-                    </ul>
-                  </div>
+                    </Box>
+                  </Paper>
                 )}
 
                 {/* Weaknesses */}
                 {quizAnalysis.weakAreas.length > 0 && (
-                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-                    <h3 className="font-medium text-orange-500 mb-2 flex items-center">
-                      <Target className="mr-2 h-4 w-4" />
-                      Areas for Improvement
-                    </h3>
-                    <ul className="text-sm space-y-1">
+                  <Paper 
+                    elevation={0}
+                    sx={{
+                      p: 2, 
+                      borderRadius: 2,
+                      bgcolor: mode === 'dark' ? 'rgba(237, 108, 2, 0.1)' : 'rgba(237, 108, 2, 0.05)',
+                      border: '1px solid',
+                      borderColor: mode === 'dark' ? 'rgba(237, 108, 2, 0.2)' : 'rgba(237, 108, 2, 0.15)'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Target sx={{ mr: 1, color: 'warning.main', fontSize: 18 }} />
+                      <Typography variant="subtitle2" color="warning.main">
+                        Areas for Improvement
+                      </Typography>
+                    </Box>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
                       {quizAnalysis.weakAreas.map((area: string, index: number) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-orange-500 mr-2">•</span>
+                        <Box 
+                          component="li" 
+                          key={index} 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start',
+                            mb: 0.5,
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <Box component="span" sx={{ color: 'warning.main', mr: 1 }}>•</Box>
                           {area}
-                        </li>
+                        </Box>
                       ))}
-                    </ul>
-                  </div>
+                    </Box>
+                  </Paper>
                 )}
-              </div>
+              </Box>
 
               {/* Detailed Analysis */}
-              <div className="bg-foreground/5 rounded-lg p-4">
-                <h3 className="font-medium mb-2">Detailed Analysis</h3>
-                <p className="text-sm leading-relaxed">{quizAnalysis.detailedAnalysis}</p>
-              </div>
+              <Paper 
+                elevation={0}
+                sx={{
+                  p: 2, 
+                  borderRadius: 2,
+                  bgcolor: mode === 'dark' ? 'rgba(50, 50, 50, 0.5)' : 'rgba(240, 240, 240, 0.7)',
+                  border: '1px solid',
+                  borderColor: mode === 'dark' ? 'divider' : 'rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight={500} mb={1}>Detailed Analysis</Typography>
+                <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
+                  {quizAnalysis.detailedAnalysis}
+                </Typography>
+              </Paper>
 
               {/* Recommendations */}
               {quizAnalysis.recommendations.length > 0 && (
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                  <h3 className="font-medium text-blue-500 mb-2">Recommendations</h3>
-                  <ul className="text-sm space-y-2">
+                <Paper 
+                  elevation={0}
+                  sx={{
+                    p: 2, 
+                    borderRadius: 2,
+                    bgcolor: mode === 'dark' ? 'rgba(25, 118, 210, 0.1)' : 'rgba(25, 118, 210, 0.05)',
+                    border: '1px solid',
+                    borderColor: mode === 'dark' ? 'rgba(25, 118, 210, 0.2)' : 'rgba(25, 118, 210, 0.15)'
+                  }}
+                >
+                  <Typography variant="subtitle2" color="primary" mb={1}>Recommendations</Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
                     {quizAnalysis.recommendations.map((rec: string, index: number) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-blue-500 mr-2">💡</span>
+                      <Box 
+                        component="li" 
+                        key={index} 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'flex-start',
+                          mb: 0.75,
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <Box component="span" sx={{ color: 'primary.main', mr: 1 }}>💡</Box>
                         {rec}
-                      </li>
+                      </Box>
                     ))}
-                  </ul>
-                </div>
+                  </Box>
+                </Paper>
               )}
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-4 justify-center">
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
                 <Button 
-                  variant="outline"
+                  variant="outlined"
+                  color="primary"
                   onClick={() => {
                     setSubject(null);
                     setQuizCompleted(false);
+                  }}
+                  sx={{
+                    textTransform: 'none',
+                    borderColor: theme.palette.mode === 'dark' ? 'divider' : theme.palette.primary.main,
+                    color: theme.palette.mode === 'dark' ? 'text.primary' : theme.palette.primary.main,
                   }}
                 >
                   Try Different Subject
                 </Button>
                 <Button 
-                  className="bg-thinkforge-purple hover:bg-thinkforge-purple/90"
+                  variant="contained"
+                  color="primary"
                   onClick={() => {
                     setQuizCompleted(false);
                     startQuiz();
+                  }}
+                  sx={{
+                    textTransform: 'none',
+                    bgcolor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      bgcolor: theme.palette.primary.dark,
+                    }
                   }}
                 >
                   Retry {subject} Quiz
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="outlined"
+                  color="primary"
                   onClick={() => navigate('/progress')}
+                  sx={{
+                    textTransform: 'none',
+                    borderColor: theme.palette.mode === 'dark' ? 'divider' : theme.palette.primary.main,
+                    color: theme.palette.mode === 'dark' ? 'text.primary' : theme.palette.primary.main,
+                  }}
                 >
                   View Progress
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
 
           {!quizStarted && subject && score.total > 0 && !quizCompleted && (
-            <div className="mt-6 p-4 rounded-lg bg-foreground/5">
-              <h3 className="font-medium mb-2">Quiz Results</h3>
-              <p>You scored {score.correct} out of {score.total}</p>
-              <div className="mt-4 flex space-x-4">
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 3,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: mode === 'dark' ? 'rgba(50, 50, 50, 0.5)' : 'rgba(240, 240, 240, 0.7)',
+                border: '1px solid',
+                borderColor: mode === 'dark' ? 'divider' : 'rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight={500} mb={1}>Quiz Results</Typography>
+              <Typography variant="body1">
+                You scored {score.correct} out of {score.total}
+              </Typography>
+              <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                 <Button 
-                  variant="outline"
+                  variant="outlined"
+                  color="primary"
                   onClick={() => setSubject(null)}
+                  sx={{
+                    textTransform: 'none',
+                    borderColor: theme.palette.mode === 'dark' ? 'divider' : theme.palette.primary.main,
+                    color: theme.palette.mode === 'dark' ? 'text.primary' : theme.palette.primary.main,
+                  }}
                 >
                   Try Different Subject
                 </Button>
                 <Button 
-                  className="bg-thinkforge-purple hover:bg-thinkforge-purple/90"
+                  variant="contained"
+                  color="primary"
                   onClick={startQuiz}
+                  sx={{
+                    textTransform: 'none',
+                    bgcolor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    '&:hover': {
+                      bgcolor: theme.palette.primary.dark,
+                    }
+                  }}
                 >
                   Retry Quiz
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Paper>
           )}
           
-          <div className="mt-8 text-center">
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
             <Button
-              variant="link"
-              className="text-flamePurple hover:text-flamePurple-light"
+              variant="text"
+              color="primary"
               onClick={() => navigate('/chat')}
+              startIcon={<BookOpen style={{ fontSize: 18 }} />}
+              sx={{
+                textTransform: 'none',
+                color: theme.palette.primary.main,
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: theme.palette.primary.dark,
+                  textDecoration: 'underline'
+                }
+              }}
             >
-              <BookOpen className="mr-2 h-4 w-4" />
               Switch to 1:1 Learning Chat
             </Button>
-          </div>
+          </Box>
         </motion.div>
-      </div>
+      </Box>
     </Layout>
   );
 };

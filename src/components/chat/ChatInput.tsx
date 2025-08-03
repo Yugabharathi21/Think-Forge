@@ -50,10 +50,11 @@ const ChatInput = ({
       sx={{ 
         p: 1.5, 
         borderRadius: 3,
-        bgcolor: mode === 'dark' ? 'rgba(30,30,30,0.6)' : 'rgba(255,255,255,0.9)',
+        bgcolor: mode === 'dark' ? 'rgba(30,30,30,0.6)' : 'rgba(250,250,250,0.95)',
         backdropFilter: 'blur(10px)',
         border: '1px solid',
-        borderColor: 'divider'
+        borderColor: mode === 'dark' ? 'divider' : 'grey.300',
+        boxShadow: mode === 'dark' ? theme.shadows[2] : '0 1px 3px rgba(0,0,0,0.1)'
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -84,9 +85,21 @@ const ChatInput = ({
           type="submit" 
           color="primary" 
           disabled={!message.trim() || disabled}
-          sx={{ ml: 1, flexShrink: 0 }}
+          sx={{ 
+            ml: 1, 
+            flexShrink: 0,
+            bgcolor: !message.trim() || disabled ? 'transparent' : `${theme.palette.primary.main}10`,
+            '&:hover': {
+              bgcolor: !message.trim() || disabled ? 'transparent' : `${theme.palette.primary.main}20`,
+            }
+          }}
         >
-          <SendIcon sx={{ fontSize: 18 }} />
+          <SendIcon sx={{ 
+            fontSize: 18,
+            color: !message.trim() || disabled 
+              ? mode === 'dark' ? 'grey.500' : 'grey.400'
+              : theme.palette.primary.main
+          }} />
         </IconButton>
       </Box>
     </Paper>
