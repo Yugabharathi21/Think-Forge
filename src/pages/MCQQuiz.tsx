@@ -243,7 +243,8 @@ const MCQQuiz = () => {
         questions.length,
         score.correct,
         questions,
-        userAnswers
+        userAnswers,
+        difficulty
       );
       
       setQuizCompleted(true);

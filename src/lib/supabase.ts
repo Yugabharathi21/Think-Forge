@@ -43,7 +43,20 @@ export interface QuizSession {
   total_questions: number;
   correct_answers: number;
   score: number;
+  difficulty?: string;
   completed_at: string;
+}
+
+export interface QuizQuestionResult {
+  id?: string;
+  quiz_session_id: string;
+  user_id?: string;
+  question_id: string;
+  question_text: string;
+  correct_option: number;
+  user_answer: number;
+  is_correct: boolean;
+  explanation?: string;
 }
 
 export interface UserProgress {
@@ -55,4 +68,38 @@ export interface UserProgress {
   correct_answers: number;
   average_score: number;
   last_activity: string;
+}
+
+export interface ChartDataPoint {
+  name: string;
+  score: number;
+  [key: string]: any;
+}
+
+export interface SubjectDataPoint {
+  name: string;
+  value: number;
+}
+
+export interface WeeklyProgressPoint {
+  name: string;
+  week: string;
+  score: number;
+  sessions: number;
+}
+
+export interface TopicDataPoint {
+  name: string;
+  score: number;
+}
+
+export interface ProgressChartData {
+  weeklyProgress: WeeklyProgressPoint[];
+  subjectDistribution: SubjectDataPoint[];
+  topicStrengths: TopicDataPoint[];
+  topicWeaknesses: TopicDataPoint[];
+  recentActivity: QuizSession[];
+  totalSessions: number;
+  totalQuestions: number;
+  averageScore: number;
 }

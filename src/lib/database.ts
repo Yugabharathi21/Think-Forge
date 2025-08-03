@@ -1,5 +1,17 @@
 import { supabase } from './supabase';
-import type { User, ChatSession, ChatMessage, QuizSession, UserProgress } from './supabase';
+import type { 
+  User, 
+  ChatSession, 
+  ChatMessage, 
+  QuizSession, 
+  UserProgress,
+  QuizQuestionResult,
+  ChartDataPoint,
+  SubjectDataPoint,
+  WeeklyProgressPoint,
+  TopicDataPoint,
+  ProgressChartData
+} from './supabase';
 import type { MCQQuestionData } from '@/features/chat/types';
 
 // Database connection test
@@ -169,13 +181,15 @@ export const quizService = {
     totalQuestions: number,
     correctAnswers: number,
     questions: MCQQuestionData[],
-    userAnswers: number[]
+    userAnswers: number[],
+    difficulty: string = 'medium'
   ): Promise<QuizSession | null> {
     console.log('💾 Saving quiz result to database...', {
       userId,
       subject,
       totalQuestions,
       correctAnswers,
+      difficulty,
       score: Math.round((correctAnswers / totalQuestions) * 100)
     });
 
@@ -190,6 +204,8 @@ export const quizService = {
           total_questions: totalQuestions,
           correct_answers: correctAnswers,
           score,
+          difficulty,
+          completed_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -322,4 +338,217 @@ export const quizService = {
     }
     return data || [];
   },
+
+  async getProgressChartData(userId: string): Promise<ProgressChartData> {
+    console.log('📊 Fetching progress chart data...');
+    
+    try {
+      // Get quiz sessions chronologically
+      const { data: sessions, error } = await supabase
+        .from('quiz_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('completed_at', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error fetching quiz sessions:', error);
+        return { 
+          weeklyProgress: [], 
+          subjectDistribution: [],
+          topicStrengths: [],
+          topicWeaknesses: [],
+          recentActivity: [],
+          totalSessions: 0,
+          totalQuestions: 0,
+          averageScore: 0
+        };
+      }
+
+      if (!sessions || sessions.length === 0) {
+        console.log('ℹ️ No quiz sessions found for user');
+        return { 
+          weeklyProgress: [], 
+          subjectDistribution: [],
+          topicStrengths: [],
+          topicWeaknesses: [],
+          recentActivity: [],
+          totalSessions: 0,
+          totalQuestions: 0,
+          averageScore: 0
+        };
+      }
+
+      // Weekly progress data
+      const weeklyProgress = this.processWeeklyProgress(sessions as QuizSession[]);
+      
+      // Subject distribution data
+      const subjectDistribution = this.processSubjectDistribution(sessions as QuizSession[]);
+
+      // Topic strength analysis
+      const topicStrengths = await this.getTopicStrengths(userId);
+      
+      // Topic weakness analysis
+      const topicWeaknesses = await this.getTopicWeaknesses(userId);
+
+      return {
+        weeklyProgress,
+        subjectDistribution,
+        topicStrengths,
+        topicWeaknesses,
+        recentActivity: (sessions as QuizSession[]).slice(-5).reverse(), // Last 5 sessions
+        totalSessions: sessions.length,
+        totalQuestions: (sessions as QuizSession[]).reduce((total, session) => total + session.total_questions, 0),
+        averageScore: Math.round((sessions as QuizSession[]).reduce((total, session) => total + session.score, 0) / sessions.length)
+      };
+    } catch (error) {
+      console.error('❌ Unexpected error fetching chart data:', error);
+      return { 
+        weeklyProgress: [], 
+        subjectDistribution: [],
+        topicStrengths: [],
+        topicWeaknesses: [],
+        recentActivity: [],
+        totalSessions: 0,
+        totalQuestions: 0,
+        averageScore: 0
+      };
+    }
+  },
+
+  processWeeklyProgress(sessions: QuizSession[]): WeeklyProgressPoint[] {
+    // Group sessions by week
+    const weeks: { [key: string]: { sessions: QuizSession[], totalScore: number, count: number } } = {};
+    
+    sessions.forEach(session => {
+      const date = new Date(session.completed_at);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
+      const weekKey = weekStart.toISOString().split('T')[0];
+      
+      if (!weeks[weekKey]) {
+        weeks[weekKey] = { sessions: [], totalScore: 0, count: 0 };
+      }
+      
+      weeks[weekKey].sessions.push(session);
+      weeks[weekKey].totalScore += session.score;
+      weeks[weekKey].count++;
+    });
+    
+    // Convert to array format for chart
+    return Object.entries(weeks).map(([weekStart, data], index) => {
+      const date = new Date(weekStart);
+      const weekName = `Week ${index + 1}`;
+      const averageScore = Math.round(data.totalScore / data.count);
+      
+      return {
+        name: weekName,
+        week: `${date.getMonth() + 1}/${date.getDate()}`,
+        score: averageScore,
+        sessions: data.count
+      };
+    });
+  },
+
+  processSubjectDistribution(sessions: QuizSession[]): SubjectDataPoint[] {
+    // Group by subject
+    const subjects: { [key: string]: number } = {};
+    
+    sessions.forEach(session => {
+      if (!subjects[session.subject]) {
+        subjects[session.subject] = 0;
+      }
+      subjects[session.subject]++;
+    });
+    
+    // Convert to array format for chart
+    return Object.entries(subjects).map(([subject, count]) => ({
+      name: subject,
+      value: count
+    }));
+  },
+
+  async getTopicStrengths(userId: string): Promise<TopicDataPoint[]> {
+    // Query successful question results grouped by topics
+    const { data: questionResults, error } = await supabase
+      .from('quiz_question_results')
+      .select('quiz_session_id, question_id, question_text, is_correct')
+      .eq('is_correct', true)
+      .eq('user_id', userId);
+      
+    if (error || !questionResults) {
+      return [];
+    }
+
+    // Extract topics and calculate scores
+    const topicScores = this.analyzeTopics(questionResults as QuizQuestionResult[]);
+    
+    // Sort by score (highest first) and take top 5
+    return Object.entries(topicScores)
+      .sort((a, b) => b[1].score - a[1].score)
+      .slice(0, 5)
+      .map(([topic, data]: [string, { correct: number, total: number, score: number }]) => ({
+        name: topic,
+        score: data.score
+      }));
+  },
+
+  async getTopicWeaknesses(userId: string): Promise<TopicDataPoint[]> {
+    // Query failed question results
+    const { data: questionResults, error } = await supabase
+      .from('quiz_question_results')
+      .select('quiz_session_id, question_id, question_text, is_correct')
+      .eq('is_correct', false)
+      .eq('user_id', userId);
+      
+    if (error || !questionResults) {
+      return [];
+    }
+
+    // Extract topics and calculate scores
+    const topicScores = this.analyzeTopics(questionResults as QuizQuestionResult[]);
+    
+    // For weaknesses, we want lowest scores
+    return Object.entries(topicScores)
+      .sort((a, b) => a[1].score - b[1].score)
+      .slice(0, 5)
+      .map(([topic, data]: [string, { correct: number, total: number, score: number }]) => ({
+        name: topic,
+        score: 100 - data.score // Invert the score for weaknesses
+      }));
+  },
+
+  analyzeTopics(questionResults: QuizQuestionResult[]): { [key: string]: { correct: number, total: number, score: number } } {
+    const topics: { [key: string]: { correct: number, total: number, score: number } } = {};
+    
+    // Extract topics from question text using NLP techniques (simplified here)
+    questionResults.forEach(result => {
+      // Extract keywords from question (simplified approach)
+      const questionWords = result.question_text.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(' ')
+        .filter((word: string) => word.length > 3); // Only words longer than 3 chars
+      
+      // Find potential topic keywords (simple approach)
+      const potentialTopics = questionWords.filter((word: string) => 
+        !['what', 'when', 'where', 'which', 'explain', 'describe', 'define'].includes(word)
+      );
+      
+      // Use the most relevant word as topic (simplified)
+      const topic = potentialTopics[0] || 'General';
+      
+      if (!topics[topic]) {
+        topics[topic] = { correct: 0, total: 0, score: 0 };
+      }
+      
+      topics[topic].total++;
+      if (result.is_correct) {
+        topics[topic].correct++;
+      }
+      
+      // Calculate score
+      topics[topic].score = Math.round((topics[topic].correct / topics[topic].total) * 100);
+    });
+    
+    return topics;
+  }
 };
