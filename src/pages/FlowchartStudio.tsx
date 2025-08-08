@@ -49,11 +49,14 @@ import {
   Settings as SettingsIcon,
   Add as AddIcon,
   Timeline as TimelineIcon,
-  Hub as NetworkIcon
+  Hub as NetworkIcon,
+  YouTube,
+  OndemandVideo
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '@/components/layout/Layout';
 import FlowchartViewer from '@/components/flowchart/FlowchartViewer';
+import YouTubeVideoModal from '@/components/youtube/YouTubeVideoModal';
 import { flowchartService, StudyPlan, GenerationOptions } from '@/lib/flowchart';
 
 const FlowchartStudio = () => {
@@ -68,6 +71,8 @@ const FlowchartStudio = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [fastMode, setFastMode] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
+  const [youtubeSearchTopic, setYoutubeSearchTopic] = useState('');
 
   const featuredTopics = [
     { 
@@ -591,6 +596,28 @@ const FlowchartStudio = () => {
                                     />
                                   </Stack>
                                 </CardContent>
+                                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                                  <Button
+                                    size="small"
+                                    startIcon={<YouTube />}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setYoutubeSearchTopic(topic.title);
+                                      setYoutubeModalOpen(true);
+                                    }}
+                                    sx={{
+                                      color: topic.color,
+                                      borderColor: topic.color,
+                                      '&:hover': {
+                                        backgroundColor: `${topic.color}10`,
+                                        borderColor: topic.color,
+                                      }
+                                    }}
+                                    variant="outlined"
+                                  >
+                                    Watch Videos
+                                  </Button>
+                                </CardActions>
                               </Card>
                             </motion.div>
                           </Grid>
@@ -663,6 +690,13 @@ const FlowchartStudio = () => {
             <AIIcon />
           </Fab>
         </Zoom>
+
+        {/* YouTube Video Modal */}
+        <YouTubeVideoModal
+          open={youtubeModalOpen}
+          onClose={() => setYoutubeModalOpen(false)}
+          topic={youtubeSearchTopic}
+        />
       </Container>
     </Layout>
   );

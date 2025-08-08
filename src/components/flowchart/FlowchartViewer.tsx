@@ -37,7 +37,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid
+  Grid,
+  Avatar
 } from '@mui/material';
 import {
   ZoomIn,
@@ -58,11 +59,14 @@ import {
   CheckCircle,
   Help,
   EmojiEvents,
-  Assignment
+  Assignment,
+  YouTube,
+  OndemandVideo
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { FlowchartNode, FlowchartEdge } from '@/lib/flowchart';
+import YouTubeVideoModal from '@/components/youtube/YouTubeVideoModal';
 
 interface FlowchartViewerProps {
   nodes: FlowchartNode[];
@@ -209,6 +213,8 @@ const FlowchartViewerInner: React.FC<FlowchartViewerProps> = ({
   const [backgroundVariant, setBackgroundVariant] = useState<BackgroundVariant>(BackgroundVariant.Dots);
   const [showNodeInfo, setShowNodeInfo] = useState(false);
   const [flowchartHeight, setFlowchartHeight] = useState(500);
+  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
+  const [youtubeSearchTopic, setYoutubeSearchTopic] = useState('');
 
   // Convert our node format to ReactFlow format with enhanced styling
   const reactFlowNodes: Node[] = useMemo(() =>
@@ -555,6 +561,31 @@ const FlowchartViewerInner: React.FC<FlowchartViewerProps> = ({
                     <Chip label={`Type: ${selectedNodeData.type}`} size="small" />
                     <Chip label={`ID: ${selectedNodeData.id}`} size="small" variant="outlined" />
                   </Stack>
+                  
+                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <OndemandVideo color="primary" />
+                      Learning Resources
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<YouTube />}
+                      onClick={() => {
+                        setYoutubeSearchTopic(selectedNodeData.label);
+                        setYoutubeModalOpen(true);
+                      }}
+                      sx={{
+                        background: 'linear-gradient(45deg, #FF5722 30%, #FF9800 90%)',
+                        color: 'white',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #F44336 30%, #FF5722 90%)',
+                        }
+                      }}
+                      fullWidth
+                    >
+                      Watch YouTube Tutorials
+                    </Button>
+                  </Box>
                 </Box>
               )}
             </DialogContent>
@@ -562,6 +593,14 @@ const FlowchartViewerInner: React.FC<FlowchartViewerProps> = ({
               <Button onClick={() => setSelectedNode(null)}>Close</Button>
             </DialogActions>
           </Dialog>
+
+          {/* YouTube Video Modal */}
+          <YouTubeVideoModal
+            open={youtubeModalOpen}
+            onClose={() => setYoutubeModalOpen(false)}
+            topic={youtubeSearchTopic}
+            nodeTitle={selectedNodeData?.label}
+          />
         </Paper>
       </Box>
 
