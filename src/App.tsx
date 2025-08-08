@@ -23,7 +23,9 @@ import MCQQuiz from "./pages/MCQQuiz";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import StudyPlan from "./pages/StudyPlan";
+import FlowchartStudio from "./pages/FlowchartStudio";
 import Debug from "./pages/Debug";
+import DebugFlowchart from "./pages/DebugFlowchart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,7 +67,14 @@ const App = () => (
               <StudyPlan />
             </ProtectedRoute>
           } />
+          <Route path="/flowchart" element={
+            <ProtectedRoute>
+              <FlowchartStudio />
+            </ProtectedRoute>
+          } />
           <Route path="/debug" element={<Debug />} />
+          {/* Hidden debug route for development */}
+          <Route path="/debug-flowchart-internal" element={<DebugFlowchart />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

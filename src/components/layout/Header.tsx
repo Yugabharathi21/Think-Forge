@@ -32,6 +32,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -72,6 +74,7 @@ const Header = () => {
     { name: 'AI Chat', path: '/chat', icon: <ChatIcon /> },
     { name: 'MCQ Quiz', path: '/mcq-quiz', icon: <QuizIcon /> },
     { name: 'Progress', path: '/progress', icon: <ProgressIcon /> },
+    { name: 'Flowchart Studio', path: '/flowchart', icon: <AccountTreeIcon /> },
   ];
 
   const drawer = (

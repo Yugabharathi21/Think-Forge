@@ -3,7 +3,8 @@ import { generateChatResponse } from './ollama';
 export interface FlowchartNode {
   id: string;
   label: string;
-  type: 'start' | 'process' | 'decision' | 'end';
+  description?: string;
+  type: 'start' | 'process' | 'decision' | 'end' | 'milestone';
   position: { x: number; y: number };
 }
 
@@ -23,11 +24,16 @@ export interface StudyPlan {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
+export interface GenerationOptions {
+  complexity?: 'beginner' | 'intermediate' | 'advanced';
+  fastMode?: boolean;
+}
+
 interface StudyStep {
   id: string;
   title: string;
   description: string;
-  type: 'start' | 'process' | 'decision' | 'end';
+  type: 'start' | 'process' | 'decision' | 'end' | 'milestone';
   estimatedTime: string;
   prerequisites: string[];
   resources: string[];
@@ -64,46 +70,91 @@ interface MindMapData {
 }
 
 class FlowchartService {
-  private async generateFlowchartPrompt(topic: string, learningGoals?: string[]): Promise<string> {
+  private getComplexitySettings(complexity: 'beginner' | 'intermediate' | 'advanced') {
+    switch (complexity) {
+      case 'beginner':
+        return { minSteps: 5, maxSteps: 8, description: 'simplified learning path' };
+      case 'intermediate':
+        return { minSteps: 8, maxSteps: 12, description: 'comprehensive study plan' };
+      case 'advanced':
+        return { minSteps: 12, maxSteps: 16, description: 'detailed expert-level curriculum' };
+      default:
+        return { minSteps: 8, maxSteps: 12, description: 'comprehensive study plan' };
+    }
+  }
+
+  private async generateFlowchartPrompt(
+    topic: string, 
+    learningGoals?: string[], 
+    options: GenerationOptions = {}
+  ): Promise<string> {
     const goalsText = learningGoals ? `\nSpecific learning goals: ${learningGoals.join(', ')}` : '';
+    const { complexity = 'intermediate', fastMode = false } = options;
+    const settings = this.getComplexitySettings(complexity);
     
-    return `Create a detailed study plan flowchart for the topic: "${topic}"${goalsText}
+    const basePrompt = `Create a ${settings.description} for the topic: "${topic}"${goalsText}
 
 Please provide a JSON response with the following structure:
 {
   "title": "Study Plan Title",
   "description": "Brief description of the study plan",
   "estimatedTime": "Total estimated time (e.g., '2 weeks', '1 month')",
-  "difficulty": "beginner|intermediate|advanced",
+  "difficulty": "${complexity}",
   "steps": [
     {
       "id": "step1",
       "title": "Step Title",
-      "description": "Detailed description",
-      "type": "start|process|decision|end",
+      "description": "Detailed description of what to learn",
+      "type": "start|process|decision|end|milestone",
       "estimatedTime": "Time for this step",
       "prerequisites": ["previous_step_id"],
       "resources": ["resource1", "resource2"]
     }
   ]
-}
+}`;
 
-Make sure to:
-1. Include 6-10 logical learning steps
-2. Start with fundamentals and progress to advanced concepts
-3. Include decision points for different learning paths
-4. Provide realistic time estimates
-5. Suggest relevant learning resources
-6. Make it comprehensive but achievable
+    if (fastMode) {
+      return basePrompt + `
+
+Fast Mode Requirements:
+- Include ${settings.minSteps}-${Math.min(settings.maxSteps, settings.minSteps + 3)} learning steps
+- Focus on essential concepts only
+- Provide concise descriptions
+- Use straightforward progression
 
 Topic: ${topic}`;
+    } else {
+      return basePrompt + `
+
+Comprehensive Mode Requirements:
+- Include ${settings.minSteps}-${settings.maxSteps} logical learning steps
+- Start with fundamentals and progress to advanced concepts
+- Include decision points for different learning paths
+- Add milestone markers for major achievements
+- Provide realistic time estimates and detailed descriptions
+- Suggest relevant learning resources
+- Make it comprehensive but achievable
+
+Node Types to Use:
+- "start": Beginning of the learning journey
+- "process": Regular learning steps or activities
+- "decision": Points where learners choose between paths
+- "milestone": Major achievements or checkpoints
+- "end": Completion of the study plan
+
+Topic: ${topic}`;
+    }
   }
 
-  async generateStudyPlan(topic: string, learningGoals?: string[]): Promise<StudyPlan> {
+  async generateStudyPlan(
+    topic: string, 
+    options: GenerationOptions = {}, 
+    learningGoals?: string[]
+  ): Promise<StudyPlan> {
     try {
-      console.log('🎯 Generating study plan for:', topic);
+      console.log('🎯 Generating study plan for:', topic, 'with options:', options);
       
-      const prompt = await this.generateFlowchartPrompt(topic, learningGoals);
+      const prompt = await this.generateFlowchartPrompt(topic, learningGoals, options);
       const aiResponse = await generateChatResponse(null, prompt, 'Study Planning', []);
       
       console.log('🤖 AI Response received for flowchart');
@@ -118,7 +169,7 @@ Topic: ${topic}`;
       console.log('📊 Parsed study plan data:', studyPlanData);
       
       // Convert AI response to flowchart format
-      const studyPlan = this.convertToFlowchart(studyPlanData);
+      const studyPlan = this.convertToFlowchart(studyPlanData, options);
       
       console.log('✅ Study plan generated successfully');
       return studyPlan;
@@ -126,103 +177,188 @@ Topic: ${topic}`;
     } catch (error) {
       console.error('❌ Error generating study plan:', error);
       // Return a fallback study plan
-      return this.getFallbackStudyPlan(topic);
+      return this.getFallbackStudyPlan(topic, options);
     }
   }
 
-  private convertToFlowchart(data: StudyPlanData): StudyPlan {
+  private convertToFlowchart(data: StudyPlanData, options: GenerationOptions = {}): StudyPlan {
     const nodes: FlowchartNode[] = [];
     const edges: FlowchartEdge[] = [];
+    const { complexity = 'intermediate' } = options;
     
-    // Generate positions for nodes in a vertical flow
+    // Generate positions for nodes in an intelligent layout
     data.steps.forEach((step: StudyStep, index: number) => {
+      // Create more sophisticated positioning based on complexity
+      const isAdvanced = complexity === 'advanced';
+      const cols = isAdvanced ? 3 : 2;
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      
+      const baseX = 150 + col * 300;
+      const baseY = 100 + row * 180;
+      
+      // Add some randomization for better visual appeal
+      const offsetX = (Math.random() - 0.5) * 50;
+      const offsetY = (Math.random() - 0.5) * 30;
+      
       const node: FlowchartNode = {
         id: step.id,
-        label: `${step.title}\n${step.estimatedTime}`,
+        label: step.title,
+        description: step.description,
         type: step.type || (index === 0 ? 'start' : 
               index === data.steps.length - 1 ? 'end' : 'process'),
         position: {
-          x: 250 + (index % 2) * 300, // Alternate left/right for better layout
-          y: 100 + index * 150
+          x: baseX + offsetX,
+          y: baseY + offsetY
         }
       };
       nodes.push(node);
       
-      // Create edges between consecutive steps
+      // Create edges between consecutive steps and prerequisites
       if (index > 0) {
         const edge: FlowchartEdge = {
           id: `edge-${data.steps[index-1].id}-${step.id}`,
           source: data.steps[index-1].id,
-          target: step.id
+          target: step.id,
+          label: step.estimatedTime
         };
         edges.push(edge);
       }
+      
+      // Create edges for prerequisites
+      step.prerequisites?.forEach(prereqId => {
+        if (prereqId !== data.steps[index-1]?.id) {
+          const prereqEdge: FlowchartEdge = {
+            id: `edge-prereq-${prereqId}-${step.id}`,
+            source: prereqId,
+            target: step.id,
+            label: 'prereq'
+          };
+          edges.push(prereqEdge);
+        }
+      });
     });
 
     return {
-      title: data.title || 'Study Plan',
+      title: data.title || `${complexity.charAt(0).toUpperCase() + complexity.slice(1)} Study Plan`,
       description: data.description || 'AI-generated study plan',
       nodes,
       edges,
       estimatedTime: data.estimatedTime || 'Variable',
-      difficulty: data.difficulty || 'intermediate'
+      difficulty: data.difficulty || complexity || 'intermediate'
     };
   }
 
-  private getFallbackStudyPlan(topic: string): StudyPlan {
-    const nodes: FlowchartNode[] = [
+  private getFallbackStudyPlan(topic: string, options: GenerationOptions = {}): StudyPlan {
+    const { complexity = 'intermediate' } = options;
+    const settings = this.getComplexitySettings(complexity);
+    
+    const basicNodes: FlowchartNode[] = [
       {
         id: 'start',
-        label: `Begin ${topic}\nStudy Plan`,
+        label: `Begin ${topic}`,
+        description: 'Start your learning journey',
         type: 'start',
         position: { x: 250, y: 50 }
       },
       {
         id: 'basics',
-        label: `Learn ${topic}\nFundamentals`,
+        label: `${topic} Fundamentals`,
+        description: 'Learn the core concepts and basics',
         type: 'process',
         position: { x: 250, y: 200 }
       },
       {
         id: 'practice',
-        label: 'Practice &\nExercises',
+        label: 'Practice & Exercises',
+        description: 'Apply what you have learned',
         type: 'process',
         position: { x: 250, y: 350 }
-      },
-      {
-        id: 'advanced',
-        label: 'Advanced\nConcepts',
-        type: 'process',
-        position: { x: 250, y: 500 }
-      },
-      {
-        id: 'end',
-        label: 'Complete\nStudy Plan',
-        type: 'end',
-        position: { x: 250, y: 650 }
       }
     ];
 
-    const edges: FlowchartEdge[] = [
-      { id: 'edge1', source: 'start', target: 'basics' },
-      { id: 'edge2', source: 'basics', target: 'practice' },
-      { id: 'edge3', source: 'practice', target: 'advanced' },
-      { id: 'edge4', source: 'advanced', target: 'end' }
-    ];
+    if (complexity !== 'beginner') {
+      basicNodes.push(
+        {
+          id: 'intermediate',
+          label: 'Intermediate Concepts',
+          description: 'Dive deeper into advanced topics',
+          type: 'process',
+          position: { x: 250, y: 500 }
+        },
+        {
+          id: 'milestone',
+          label: 'Mid-Point Assessment',
+          description: 'Evaluate your progress so far',
+          type: 'milestone',
+          position: { x: 450, y: 425 }
+        }
+      );
+    }
+
+    if (complexity === 'advanced') {
+      basicNodes.push(
+        {
+          id: 'advanced',
+          label: 'Advanced Topics',
+          description: 'Master expert-level concepts',
+          type: 'process',
+          position: { x: 250, y: 650 }
+        },
+        {
+          id: 'specialization',
+          label: 'Choose Specialization',
+          description: 'Select your area of focus',
+          type: 'decision',
+          position: { x: 450, y: 650 }
+        }
+      );
+    }
+
+    basicNodes.push({
+      id: 'end',
+      label: 'Complete Study Plan',
+      description: 'Congratulations on completing your learning journey!',
+      type: 'end',
+      position: { x: 250, y: complexity === 'advanced' ? 800 : (complexity === 'intermediate' ? 650 : 500) }
+    });
+
+    const edges: FlowchartEdge[] = [];
+    for (let i = 0; i < basicNodes.length - 1; i++) {
+      if (basicNodes[i].type !== 'milestone') {
+        edges.push({
+          id: `edge${i + 1}`,
+          source: basicNodes[i].id,
+          target: basicNodes[i + 1].id
+        });
+      }
+    }
+
+    // Add milestone connections
+    if (complexity !== 'beginner') {
+      edges.push({
+        id: 'edge-milestone',
+        source: 'practice',
+        target: 'milestone'
+      });
+    }
 
     return {
-      title: `Study Plan: ${topic}`,
-      description: 'Basic study plan structure',
-      nodes,
+      title: `${complexity.charAt(0).toUpperCase() + complexity.slice(1)} Study Plan: ${topic}`,
+      description: `A ${complexity}-level study plan structure`,
+      nodes: basicNodes,
       edges,
-      estimatedTime: '2-4 weeks',
-      difficulty: 'intermediate'
+      estimatedTime: complexity === 'beginner' ? '2-3 weeks' : complexity === 'intermediate' ? '1-2 months' : '2-3 months',
+      difficulty: complexity
     };
   }
 
-  async generateMindMap(topic: string): Promise<StudyPlan> {
+  async generateMindMap(topic: string, options: GenerationOptions = {}): Promise<StudyPlan> {
     try {
-      console.log('🧠 Generating mind map for:', topic);
+      console.log('🧠 Generating mind map for:', topic, 'with options:', options);
+      
+      const { complexity = 'intermediate', fastMode = false } = options;
+      const settings = this.getComplexitySettings(complexity);
       
       const prompt = `Create a mind map structure for the topic: "${topic}"
 
@@ -250,11 +386,18 @@ Please provide a JSON response with a mind map structure:
   ]
 }
 
-Create a comprehensive mind map with:
-1. Central topic in the middle
-2. 4-6 main branches (key concepts)
-3. 2-4 sub-branches for each main branch
-4. Clear relationships between concepts`;
+${fastMode ? `
+Fast Mode: Create a simplified mind map with:
+- 4-6 main branches (key concepts)
+- 1-2 sub-branches for each main branch
+- Focus on essential concepts only
+` : `
+Comprehensive Mode: Create a detailed mind map with:
+- ${Math.max(4, Math.min(8, settings.maxSteps / 2))} main branches (key concepts)
+- 2-4 sub-branches for each main branch
+- Clear relationships between concepts
+- Include both theoretical and practical aspects
+`}`;
 
       const aiResponse = await generateChatResponse(null, prompt, 'Mind Mapping', []);
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
@@ -264,29 +407,32 @@ Create a comprehensive mind map with:
       }
       
       const mindMapData = JSON.parse(jsonMatch[0]) as MindMapData;
-      return this.convertMindMapToFlowchart(mindMapData, topic);
+      return this.convertMindMapToFlowchart(mindMapData, topic, options);
       
     } catch (error) {
       console.error('❌ Error generating mind map:', error);
-      return this.getFallbackMindMap(topic);
+      return this.getFallbackMindMap(topic, options);
     }
   }
 
-  private convertMindMapToFlowchart(data: MindMapData, topic: string): StudyPlan {
+  private convertMindMapToFlowchart(data: MindMapData, topic: string, options: GenerationOptions = {}): StudyPlan {
     const nodes: FlowchartNode[] = [];
     const edges: FlowchartEdge[] = [];
+    const { complexity = 'intermediate' } = options;
     
     // Central node
     nodes.push({
       id: 'central',
       label: topic,
+      description: 'Central concept of the mind map',
       type: 'start',
       position: { x: 400, y: 300 }
     });
 
-    const angleStep = (2 * Math.PI) / (data.concepts[0]?.branches?.length || 6);
+    const branches = data.concepts[0]?.branches || [];
+    const angleStep = (2 * Math.PI) / branches.length;
     
-    data.concepts[0]?.branches?.forEach((branch: MindMapBranch, index: number) => {
+    branches.forEach((branch: MindMapBranch, index: number) => {
       const angle = index * angleStep;
       const radius = 200;
       const x = 400 + radius * Math.cos(angle);
@@ -295,6 +441,7 @@ Create a comprehensive mind map with:
       nodes.push({
         id: branch.id,
         label: branch.title,
+        description: `Key concept: ${branch.title}`,
         type: 'process',
         position: { x, y }
       });
@@ -305,9 +452,9 @@ Create a comprehensive mind map with:
         target: branch.id
       });
       
-      // Add sub-branches
+      // Add sub-branches with better positioning
       branch.subbranches?.forEach((sub, subIndex: number) => {
-        const subAngle = angle + (subIndex - 1) * 0.3;
+        const subAngle = angle + (subIndex - (branch.subbranches!.length - 1) / 2) * 0.4;
         const subRadius = 120;
         const subX = x + subRadius * Math.cos(subAngle);
         const subY = y + subRadius * Math.sin(subAngle);
@@ -315,6 +462,7 @@ Create a comprehensive mind map with:
         nodes.push({
           id: sub.id,
           label: sub.title,
+          description: `Sub-concept of ${branch.title}`,
           type: 'process',
           position: { x: subX, y: subY }
         });
@@ -329,62 +477,61 @@ Create a comprehensive mind map with:
 
     return {
       title: `Mind Map: ${topic}`,
-      description: 'Visual concept mapping',
+      description: `Visual concept mapping for ${topic} (${complexity} level)`,
       nodes,
       edges,
       estimatedTime: 'Reference',
-      difficulty: 'intermediate'
+      difficulty: complexity
     };
   }
 
-  private getFallbackMindMap(topic: string): StudyPlan {
-    const nodes: FlowchartNode[] = [
+  private getFallbackMindMap(topic: string, options: GenerationOptions = {}): StudyPlan {
+    const { complexity = 'intermediate' } = options;
+    
+    const baseNodes: FlowchartNode[] = [
       {
         id: 'central',
         label: topic,
+        description: `Central concept: ${topic}`,
         type: 'start',
         position: { x: 400, y: 300 }
-      },
-      {
-        id: 'concept1',
-        label: 'Key Concept 1',
-        type: 'process',
-        position: { x: 200, y: 150 }
-      },
-      {
-        id: 'concept2',
-        label: 'Key Concept 2',
-        type: 'process',
-        position: { x: 600, y: 150 }
-      },
-      {
-        id: 'concept3',
-        label: 'Key Concept 3',
-        type: 'process',
-        position: { x: 200, y: 450 }
-      },
-      {
-        id: 'concept4',
-        label: 'Key Concept 4',
-        type: 'process',
-        position: { x: 600, y: 450 }
       }
     ];
 
-    const edges: FlowchartEdge[] = [
-      { id: 'edge1', source: 'central', target: 'concept1' },
-      { id: 'edge2', source: 'central', target: 'concept2' },
-      { id: 'edge3', source: 'central', target: 'concept3' },
-      { id: 'edge4', source: 'central', target: 'concept4' }
-    ];
+    const concepts = complexity === 'beginner' ? 4 : complexity === 'intermediate' ? 6 : 8;
+    const angleStep = (2 * Math.PI) / concepts;
+    
+    for (let i = 0; i < concepts; i++) {
+      const angle = i * angleStep;
+      const radius = 200;
+      const x = 400 + radius * Math.cos(angle);
+      const y = 300 + radius * Math.sin(angle);
+      
+      baseNodes.push({
+        id: `concept${i + 1}`,
+        label: `Key Concept ${i + 1}`,
+        description: `Important aspect of ${topic}`,
+        type: 'process',
+        position: { x, y }
+      });
+    }
+
+    const edges: FlowchartEdge[] = [];
+    for (let i = 1; i <= concepts; i++) {
+      edges.push({
+        id: `edge${i}`,
+        source: 'central',
+        target: `concept${i}`
+      });
+    }
 
     return {
       title: `Mind Map: ${topic}`,
-      description: 'Basic mind map structure',
-      nodes,
+      description: `${complexity.charAt(0).toUpperCase() + complexity.slice(1)}-level mind map structure`,
+      nodes: baseNodes,
       edges,
       estimatedTime: 'Reference',
-      difficulty: 'intermediate'
+      difficulty: complexity
     };
   }
 }
