@@ -132,12 +132,14 @@ Comprehensive Mode Requirements:
 - Include decision points for different learning paths
 - Add milestone markers for major achievements
 - Provide realistic time estimates and detailed descriptions
-- Suggest relevant learning resources
+- Suggest relevant learning resources (books, tutorials, documentation)
+- Focus on conceptual understanding and practical application
 - Make it comprehensive but achievable
+- Do NOT include practice tests, assessments, quizzes, or examinations
 
 Node Types to Use:
 - "start": Beginning of the learning journey
-- "process": Regular learning steps or activities
+- "process": Regular learning steps or activities (concepts, tutorials, hands-on work)
 - "decision": Points where learners choose between paths
 - "milestone": Major achievements or checkpoints
 - "end": Completion of the study plan
@@ -269,9 +271,9 @@ Topic: ${topic}`;
         position: { x: 250, y: 200 }
       },
       {
-        id: 'practice',
-        label: 'Practice & Exercises',
-        description: 'Apply what you have learned',
+        id: 'concepts',
+        label: 'Core Concepts',
+        description: 'Understand key principles and ideas',
         type: 'process',
         position: { x: 250, y: 350 }
       }
@@ -288,8 +290,8 @@ Topic: ${topic}`;
         },
         {
           id: 'milestone',
-          label: 'Mid-Point Assessment',
-          description: 'Evaluate your progress so far',
+          label: 'Learning Milestone',
+          description: 'Check your understanding and progress',
           type: 'milestone',
           position: { x: 450, y: 425 }
         }
@@ -338,7 +340,7 @@ Topic: ${topic}`;
     if (complexity !== 'beginner') {
       edges.push({
         id: 'edge-milestone',
-        source: 'practice',
+        source: 'concepts',
         target: 'milestone'
       });
     }

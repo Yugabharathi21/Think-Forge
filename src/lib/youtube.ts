@@ -97,14 +97,32 @@ class YouTubeService {
         throw new Error(`YouTube API error: ${data.error.message}`);
       }
 
-      const videos: YouTubeVideo[] = data.items?.map((item: YouTubeSearchItem) => ({
+      // Filter out test-related content
+      const filteredItems = data.items?.filter((item: YouTubeSearchItem) => {
+        const title = item.snippet.title.toLowerCase();
+        const description = item.snippet.description.toLowerCase();
+        
+        // Keywords to exclude for test-related content
+        const excludeKeywords = [
+          'test', 'quiz', 'exam', 'assessment', 'practice test', 
+          'mock test', 'sample test', 'question paper', 'mcq',
+          'multiple choice', 'assessment test', 'entrance exam',
+          'competitive exam', 'practice questions', 'test series'
+        ];
+        
+        return !excludeKeywords.some(keyword => 
+          title.includes(keyword) || description.includes(keyword)
+        );
+      }) || [];
+
+      const videos: YouTubeVideo[] = filteredItems.map((item: YouTubeSearchItem) => ({
         id: item.id.videoId,
         title: item.snippet.title,
         description: item.snippet.description,
         thumbnailUrl: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default.url,
         channelTitle: item.snippet.channelTitle,
         publishedAt: item.snippet.publishedAt,
-      })) || [];
+      }));
 
       return {
         videos,

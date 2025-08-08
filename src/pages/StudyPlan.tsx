@@ -237,48 +237,6 @@ const StudyPlanPage: React.FC = () => {
               description={studyPlan.description}
               className="w-full"
             />
-
-            {/* Steps Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Step-by-Step Breakdown</CardTitle>
-                <CardDescription>
-                  Detailed view of each step in your {type === 'mind-map' ? 'mind map' : 'study plan'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {studyPlan.nodes.map((node, index) => (
-                    <div
-                      key={node.id}
-                      className="flex items-start gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
-                    >
-                      <div className={`
-                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white
-                        ${node.type === 'start' ? 'bg-green-500' :
-                          node.type === 'end' ? 'bg-red-500' :
-                          node.type === 'decision' ? 'bg-yellow-500' : 'bg-blue-500'}
-                      `}>
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                          {node.label.split('\n')[0]}
-                        </h4>
-                        {node.label.includes('\n') && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {node.label.split('\n').slice(1).join(' ')}
-                          </p>
-                        )}
-                        <Badge variant="outline" className="mt-2 text-xs">
-                          {node.type}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
       </div>
