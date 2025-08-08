@@ -239,8 +239,14 @@ const YouTubeIntegrationDocs = () => {
         <Card sx={{ borderRadius: 3 }}>
           <CardContent sx={{ p: 4 }}>
             <Typography variant="h4" gutterBottom>
-              💡 Usage Examples
+              💡 Usage Examples & Demo
             </Typography>
+            
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography variant="body2">
+                <strong>Demo Available:</strong> Visit the <Typography component="a" href="/debug" target="_blank" rel="noopener" sx={{ color: 'primary.main', textDecoration: 'underline' }}>Debug Page</Typography> to test the YouTube integration with sample topics.
+              </Typography>
+            </Alert>
             
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>

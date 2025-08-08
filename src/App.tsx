@@ -25,8 +25,6 @@ import Profile from "./pages/Profile";
 import StudyPlan from "./pages/StudyPlan";
 import FlowchartStudio from "./pages/FlowchartStudio";
 import Debug from "./pages/Debug";
-import DebugFlowchart from "./pages/DebugFlowchart";
-import YouTubeDemo from "./pages/YouTubeDemo";
 import YouTubeIntegrationDocs from "./pages/YouTubeIntegrationDocs";
 import NotFound from "./pages/NotFound";
 
@@ -75,10 +73,6 @@ const App = () => (
             </ProtectedRoute>
           } />
           <Route path="/debug" element={<Debug />} />
-          {/* Hidden debug route for development */}
-          <Route path="/debug-flowchart-internal" element={<DebugFlowchart />} />
-          {/* YouTube Demo page for testing */}
-          <Route path="/youtube-demo" element={<YouTubeDemo />} />
           {/* YouTube Integration Documentation */}
           <Route path="/youtube-docs" element={<YouTubeIntegrationDocs />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

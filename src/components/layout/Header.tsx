@@ -75,10 +75,6 @@ const Header = () => {
     { name: 'MCQ Quiz', path: '/mcq-quiz', icon: <QuizIcon /> },
     { name: 'Progress', path: '/progress', icon: <ProgressIcon /> },
     { name: 'Flowchart Studio', path: '/flowchart', icon: <AccountTreeIcon /> },
-    // Development/Demo routes (can be hidden in production)
-    ...(process.env.NODE_ENV === 'development' ? [
-      { name: 'YouTube Demo', path: '/youtube-demo', icon: <AccountTreeIcon /> },
-    ] : []),
   ];
 
   const drawer = (
