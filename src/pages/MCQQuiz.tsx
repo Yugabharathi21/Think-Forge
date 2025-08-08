@@ -16,8 +16,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MCQQuestionData } from '@/features/chat/types';
 import { motion } from 'framer-motion';
 // Material UI imports
-import { Box, Typography, Button, useTheme, Radio, RadioGroup as MUIRadioGroup, FormControlLabel, FormControl as MUIFormControl, FormLabel } from '@mui/material';
+import { Box, Typography, Button, useTheme, Radio, RadioGroup as MUIRadioGroup, FormControlLabel, FormControl as MUIFormControl, FormLabel, Paper } from '@mui/material';
 import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
+// Add Recharts imports at the top
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { UserProgress } from '@/lib/supabase';
 
 const MCQQuiz = () => {
   const navigate = useNavigate();
@@ -45,6 +48,8 @@ const MCQQuiz = () => {
     detailedAnalysis: string;
   } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [progressData, setProgressData] = useState<UserProgress[]>([]);
+  const [progressLoading, setProgressLoading] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -287,6 +292,16 @@ const MCQQuiz = () => {
       document.body.style.background = '';
     };
   }, [mode]);
+
+  // Fetch persistent progress data when quiz is completed and user is available
+  useEffect(() => {
+    if (quizCompleted && user) {
+      setProgressLoading(true);
+      quizService.getUserProgress(user.id)
+        .then((data) => setProgressData(data))
+        .finally(() => setProgressLoading(false));
+    }
+  }, [quizCompleted, user]);
   
   return (
     <Layout>
@@ -404,7 +419,7 @@ const MCQQuiz = () => {
                       }}
                     >
                       <Typography sx={{ color: 'text.primary', fontWeight: 500 }}>{subj}</Typography>
-                      <Brain sx={{ ml: 1, fontSize: 20, color: 'primary.main' }} />
+                      <Brain className="ml-1 text-primary" style={{ fontSize: 20 }} />
                     </Button>
                   </motion.div>
                 ))}
@@ -483,13 +498,13 @@ const MCQQuiz = () => {
                 >
                   {loading ? (
                     <>
-                      <Loader2 sx={{ mr: 1, fontSize: 18, animation: 'spin 1s linear infinite' }} />
+                      <Loader2 className="mr-1 animate-spin" style={{ fontSize: 18 }} />
                       Generating Questions...
                     </>
                   ) : (
                     <>
                       Start {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Quiz
-                      <ArrowRight sx={{ ml: 1, fontSize: 18 }} />
+                      <ArrowRight className="ml-1" style={{ fontSize: 18 }} />
                     </>
                   )}
                 </Button>
@@ -572,7 +587,7 @@ const MCQQuiz = () => {
                         color: theme.palette.primary.contrastText,
                       }}
                     >
-                      <Loader2 sx={{ mr: 1, fontSize: 16, animation: 'spin 1s linear infinite' }} />
+                      <Loader2 className="mr-1 animate-spin" style={{ fontSize: 16 }} />
                       Saving Results...
                     </Button>
                   )}
@@ -611,6 +626,37 @@ const MCQQuiz = () => {
                 </Typography>
               </Box>
 
+              {/* Bar Chart */}
+              {progressLoading ? (
+                <Box sx={{ width: '100%', maxWidth: 500, mx: 'auto', mb: 4, textAlign: 'center' }}>
+                  <Typography variant="body2">Loading progress chart...</Typography>
+                </Box>
+              ) : progressData.length > 0 ? (
+                <Box sx={{ width: '100%', maxWidth: 500, mx: 'auto', mb: 4 }}>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart
+                      data={progressData.filter(p => p.subject === subject).map(p => ({
+                        name: p.subject,
+                        Correct: p.correct_answers,
+                        Incorrect: p.total_questions_answered - p.correct_answers
+                      }))}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis allowDecimals={false} />
+                      <RechartsTooltip />
+                      <Bar dataKey="Correct" fill="#4caf50" />
+                      <Bar dataKey="Incorrect" fill="#f44336" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              ) : (
+                <Box sx={{ width: '100%', maxWidth: 500, mx: 'auto', mb: 4, textAlign: 'center' }}>
+                  <Typography variant="body2">No progress data available yet.</Typography>
+                </Box>
+              )}
+
               {/* Performance Analysis */}
               <Box sx={{ 
                 display: 'grid', 
@@ -630,7 +676,7 @@ const MCQQuiz = () => {
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <TrendingUp sx={{ mr: 1, color: 'success.main', fontSize: 18 }} />
+                      <TrendingUp className="mr-1 text-green-600" style={{ fontSize: 18 }} />
                       <Typography variant="subtitle2" color="success.main">
                         Strong Areas
                       </Typography>
@@ -668,7 +714,7 @@ const MCQQuiz = () => {
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Target sx={{ mr: 1, color: 'warning.main', fontSize: 18 }} />
+                      <Target className="mr-1 text-yellow-600" style={{ fontSize: 18 }} />
                       <Typography variant="subtitle2" color="warning.main">
                         Areas for Improvement
                       </Typography>
@@ -686,7 +732,7 @@ const MCQQuiz = () => {
                           }}
                         >
                           <Box component="span" sx={{ color: 'warning.main', mr: 1 }}>•</Box>
-                          {area}
+                          {area.toLowerCase().includes(subject?.toLowerCase() || '') ? area : `${subject}: ${area}`}
                         </Box>
                       ))}
                     </Box>
