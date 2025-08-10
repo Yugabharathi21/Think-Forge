@@ -1,301 +1,322 @@
-import { useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Grid,
-  Typography,
-  useTheme,
-  styled,
-  Link,
-  Divider,
-  Paper
-} from '@mui/material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import ChatIcon from '@mui/icons-material/Chat';
-import QuizIcon from '@mui/icons-material/Quiz';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import SchoolIcon from '@mui/icons-material/School';
-import SettingsIcon from '@mui/icons-material/Settings';
-
-import Layout from '@/components/layout/Layout';
-import { useTheme as useAppTheme } from '@/contexts/ThemeContext';
-
-// Styled components
-const HeroContainer = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  overflow: 'hidden',
-  paddingTop: theme.spacing(12),
-  paddingBottom: theme.spacing(12),
-  [theme.breakpoints.up('md')]: {
-    paddingTop: theme.spacing(20),
-    paddingBottom: theme.spacing(20),
-  },
-}));
-
-const FeatureCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-  '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: theme.palette.mode === 'light' 
-      ? '0 10px 30px rgba(0,0,0,0.1)' 
-      : '0 10px 30px rgba(0,0,0,0.3)',
-  },
-}));
-
-const IconBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 60,
-  height: 60,
-  borderRadius: '12px',
-  marginBottom: theme.spacing(2),
-  backgroundColor: theme.palette.mode === 'light' 
-    ? theme.palette.primary.light + '30' // Adding transparency
-    : theme.palette.primary.dark + '50', 
-}));
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  MessageCircle, 
+  Trophy, 
+  BarChart3, 
+  BookOpen, 
+  Sparkles, 
+  ArrowRight,
+  Star,
+  Users,
+  Zap,
+  Target,
+  Brain
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Home = () => {
-  const theme = useTheme();
-  const { mode } = useAppTheme();
-  
+  const navigate = useNavigate();
+  const { mode } = useTheme();
+  const { isAuthenticated } = useAuth();
+
+  // Smart navigation based on authentication status
+  const handleStartLearning = () => {
+    if (isAuthenticated) {
+      navigate('/chat');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const handleSignUp = () => {
+    if (isAuthenticated) {
+      navigate('/progress');
+    } else {
+      navigate('/signup');
+    }
+  };
+
   const features = [
     {
-      title: "AI Learning Companion",
-      description: "Engage in dynamic conversations with an AI tutor that adapts to your learning style and pace.",
-      icon: <ChatIcon fontSize="large" color="primary" />,
-      link: "/chat"
+      icon: <MessageCircle className="w-8 h-8 text-blue-500 dark:text-blue-400" />,
+      title: "AI Chat Tutor",
+      description: "Get instant help with personalized AI conversations that adapt to your learning style.",
+      color: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800"
     },
     {
+      icon: <Trophy className="w-8 h-8 text-yellow-500 dark:text-yellow-400" />,
       title: "Interactive Quizzes",
-      description: "Test your knowledge with adaptive multiple-choice questions that challenge your understanding.",
-      icon: <QuizIcon fontSize="large" color="primary" />,
-      link: "/mcq-quiz"
+      description: "Test your knowledge with smart quizzes that help reinforce what you've learned.",
+      color: "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800"
     },
     {
+      icon: <BarChart3 className="w-8 h-8 text-green-500 dark:text-green-400" />,
       title: "Progress Tracking",
-      description: "Monitor your improvement over time with detailed analytics and personalized feedback.",
-      icon: <BarChartIcon fontSize="large" color="primary" />,
-      link: "/progress"
+      description: "Monitor your learning journey with detailed analytics and achievement tracking.",
+      color: "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
     },
     {
-      title: "Customizable Subjects",
-      description: "Choose from a wide range of subjects and topics tailored to your interests and educational goals.",
-      icon: <SchoolIcon fontSize="large" color="primary" />,
-      link: "/chat"
-    },
-    {
-      title: "Multiple Learning Modes",
-      description: "Switch between different learning modes to reinforce concepts through varied approaches.",
-      icon: <SettingsIcon fontSize="large" color="primary" />,
-      link: "/chat"
-    },
-    {
-      title: "Instant Feedback",
-      description: "Receive immediate explanations and corrections to strengthen your understanding of concepts.",
-      icon: <PsychologyIcon fontSize="large" color="primary" />,
-      link: "/chat"
+      icon: <BookOpen className="w-8 h-8 text-purple-500 dark:text-purple-400" />,
+      title: "Multiple Subjects",
+      description: "Learn across various subjects with specialized AI tutors for each domain.",
+      color: "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800"
     }
   ];
-  
+
+  const stats = [
+    { number: "10K+", label: "Students Learning", icon: <Users className="w-5 h-5" /> },
+    { number: "50+", label: "Subjects Available", icon: <BookOpen className="w-5 h-5" /> },
+    { number: "95%", label: "Success Rate", icon: <Target className="w-5 h-5" /> },
+    { number: "24/7", label: "AI Support", icon: <Zap className="w-5 h-5" /> }
+  ];
+
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      role: "Computer Science Student",
+      content: "Think-Forge AI helped me understand complex algorithms in ways my textbooks never could!",
+      rating: 5
+    },
+    {
+      name: "Michael Rodriguez",
+      role: "High School Student",
+      content: "The interactive quizzes made studying for my exams so much more engaging and effective.",
+      rating: 5
+    },
+    {
+      name: "Emily Johnson",
+      role: "Medical Student",
+      content: "Having an AI tutor available 24/7 has been a game-changer for my medical studies.",
+      rating: 5
+    }
+  ];
+
   return (
-    <Layout>
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+      <Header />
+      
       {/* Hero Section */}
-      <HeroContainer>
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Box sx={{ position: 'relative' }}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <Typography 
-                    component="h1"
-                    variant="h2"
-                    fontWeight="700"
-                    gutterBottom
-                  >
-                    Think-Forge
-                    <Box 
-                      component="span" 
-                      sx={{ 
-                        color: 'primary.main', 
-                        display: 'inline-block',
-                        ml: 1
-                      }}
-                    >
-                      AI
-                    </Box>
-                  </Typography>
-                  
-                  <Typography 
-                    variant="h5" 
-                    color="text.secondary" 
-                    paragraph
-                    sx={{ mb: 4, maxWidth: '90%' }}
-                  >
-                    Unlock deeper learning through AI-powered conversations. Master concepts, challenge your understanding, and track your progress.
-                  </Typography>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.8 }}
-                  >
-                    <Button
-                      component={RouterLink}
-                      to="/chat"
-                      variant="contained"
-                      size="large"
-                      endIcon={<ArrowForwardIcon />}
-                    >
-                      Start Learning
-                    </Button>
-                    
-                    <Button
-                      component={RouterLink}
-                      to="/signup"
-                      variant="outlined"
-                      size="large"
-                      sx={{ ml: 2 }}
-                    >
-                      Sign Up
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              </Box>
-            </Grid>
+      <section className="pt-32 pb-16 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <Badge variant="secondary" className="mb-6 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800">
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI-Powered Learning Platform
+            </Badge>
             
-            <Grid item xs={12} md={6}>
-              <Box sx={{ position: 'relative' }}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 1 }}
-                >
-                  <Paper 
-                    elevation={6}
-                    sx={{ 
-                      overflow: 'hidden',
-                      height: '400px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: mode === 'light' ? 'primary.light' : 'background.paper',
-                      border: `1px solid ${theme.palette.divider}`,
-                      position: 'relative',
-                    }}
-                  >
-                    {/* This would be a custom illustration or animation */}
-                    <Box sx={{ 
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      opacity: 0.1,
-                      background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.secondary.light} 100%)`,
-                    }} />
-                    
-                    <PsychologyIcon sx={{ fontSize: 120, opacity: 0.3, color: 'primary.main' }} />
-                  </Paper>
-                </motion.div>
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      </HeroContainer>
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              Learn Smarter with
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
+                AI-Powered Education
+              </span>
+            </h1>
+            
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+              Experience personalized learning with our advanced AI tutor. Get instant help, 
+              take interactive quizzes, and track your progress across multiple subjects.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                onClick={handleStartLearning}
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-lg px-8 py-3"
+              >
+                {isAuthenticated ? 'Continue Learning' : 'Start Learning Now'}
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={handleSignUp}
+                className="text-lg px-8 py-3 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200"
+              >
+                {isAuthenticated ? 'View Progress' : 'Sign Up Free'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="flex justify-center items-center mb-2 text-blue-600 dark:text-blue-400">
+                  {stat.icon}
+                </div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.number}</div>
+                <div className="text-gray-600 dark:text-gray-400">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Features Section */}
-      <Box sx={{ py: 8, bgcolor: mode === 'light' ? 'grey.50' : 'background.paper' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography variant="h3" component="h2" gutterBottom>
-              Features
-            </Typography>
-            <Typography 
-              variant="h6" 
-              color="text.secondary" 
-              sx={{ maxWidth: '700px', mx: 'auto' }}
-            >
-              Personalized learning tools designed to enhance your understanding
-            </Typography>
-          </Box>
+      <section id="features" className="py-20 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Why Choose Think-Forge AI?
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Our platform combines cutting-edge AI technology with proven educational methods 
+              to deliver a personalized learning experience.
+            </p>
+          </div>
 
-          <Grid container spacing={4}>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
-                >
-                  <FeatureCard>
-                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                      <IconBox>
-                        {feature.icon}
-                      </IconBox>
-                      <Typography variant="h6" component="h3" gutterBottom>
-                        {feature.title}
-                      </Typography>
-                      <Typography color="text.secondary" paragraph sx={{ mb: 2, flexGrow: 1 }}>
-                        {feature.description}
-                      </Typography>
-                      <Link 
-                        component={RouterLink} 
-                        to={feature.link}
-                        color="primary"
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          mt: 'auto',
-                          fontWeight: 500,
-                          '&:hover': { textDecoration: 'none' }
-                        }}
-                      >
-                        Learn More
-                        <ArrowForwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                      </Link>
-                    </CardContent>
-                  </FeatureCard>
-                </motion.div>
-              </Grid>
+              <Card key={index} className={`${feature.color} border-2 hover:shadow-lg dark:hover:shadow-xl transition-shadow dark:bg-gray-800/50`}>
+                <CardHeader className="text-center">
+                  <div className="flex justify-center mb-4">
+                    {feature.icon}
+                  </div>
+                  <CardTitle className="text-xl text-gray-900 dark:text-white">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-gray-700 dark:text-gray-300 text-center">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
-        </Container>
-      </Box>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+                The Future of Learning is Here
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                Think-Forge AI revolutionizes education by providing personalized, 
+                interactive learning experiences powered by advanced artificial intelligence. 
+                Our platform adapts to your learning style and pace, ensuring optimal knowledge retention.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-700 dark:text-gray-300">Personalized AI tutoring for every student</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-700 dark:text-gray-300">Real-time progress tracking and analytics</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full"></div>
+                  </div>
+                  <span className="text-gray-700 dark:text-gray-300">Interactive quizzes and instant feedback</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border dark:border-gray-700">
+              <div className="text-center">
+                <Brain className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Ready to Get Started?</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Join thousands of students who are already learning smarter with AI.
+                </p>
+                <Button 
+                  onClick={handleStartLearning}
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                >
+                  {isAuthenticated ? 'Continue Your Journey' : 'Start Your Learning Journey'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-20 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              What Our Students Say
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">
+              Real feedback from students who transformed their learning experience
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-600 transition-colors dark:bg-gray-800">
+                <CardHeader>
+                  <div className="flex items-center space-x-1 mb-2">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <CardDescription className="text-gray-700 dark:text-gray-300 text-base">
+                    "{testimonial.content}"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">{testimonial.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
-      <Box sx={{ py: 10, textAlign: 'center' }}>
-        <Container maxWidth="md">
-          <Typography variant="h3" component="h2" gutterBottom>
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to Transform Your Learning?
-          </Typography>
-          <Typography variant="h6" color="text.secondary" paragraph sx={{ mb: 4 }}>
-            Join Think-Forge today and experience a new way to learn, challenge yourself, and grow
-          </Typography>
-          <Button 
-            component={RouterLink} 
-            to="/signup" 
-            variant="contained" 
-            size="large"
-          >
-            Get Started
-          </Button>
-        </Container>
-      </Box>
-    </Layout>
+          </h2>
+          <p className="text-xl text-blue-100 dark:text-blue-200 mb-8">
+            Join thousands of students who are already experiencing the future of education.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg"
+              onClick={handleStartLearning}
+              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3"
+            >
+              {isAuthenticated ? 'Continue Learning' : 'Start Learning Free'}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+            <Button 
+              size="lg"
+              variant="outline"
+              onClick={handleSignUp}
+              className="border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8 py-3"
+            >
+              {isAuthenticated ? 'View Progress' : 'Create Account'}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
   );
 };
 
