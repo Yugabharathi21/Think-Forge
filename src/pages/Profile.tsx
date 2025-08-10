@@ -1,15 +1,168 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Mail, Calendar, Settings } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { 
+  User, 
+  Mail, 
+  Calendar, 
+  Settings, 
+  Brain, 
+  MessageSquare, 
+  Target, 
+  TrendingUp,
+  BookOpen,
+  Clock,
+  Award,
+  Activity
+} from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { chatService, quizService } from '@/lib/database';
+import type { UserProgress, ChatSession, QuizSession } from '@/lib/supabase';
+
+interface ProfileStats {
+  totalQuizzes: number;
+  averageScore: number;
+  totalChatSessions: number;
+  totalStudyHours: number;
+  subjectProgress: UserProgress[];
+  recentActivity: (QuizSession | ChatSession)[];
+  currentStreak: number;
+  longestStreak: number;
+}
 
 const Profile = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState<ProfileStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUserStats = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch all user data in parallel
+        const [
+          userProgress,
+          chatSessions,
+          quizHistory
+        ] = await Promise.all([
+          quizService.getUserProgress(user.id),
+          chatService.getUserSessions(user.id),
+          quizService.getUserQuizHistory(user.id)
+        ]);
+
+        // Calculate statistics
+        const totalQuizzes = quizHistory.length;
+        const averageScore = totalQuizzes > 0 
+          ? Math.round(quizHistory.reduce((sum, quiz) => sum + quiz.score, 0) / totalQuizzes)
+          : 0;
+        
+        const totalChatSessions = chatSessions.length;
+        
+        // Estimate study hours (rough calculation based on activity)
+        const totalStudyHours = Math.round(
+          (totalQuizzes * 0.5) + (totalChatSessions * 0.25)
+        );
+
+        // Calculate current and longest streak based on activity frequency
+        const currentStreak = calculateCurrentStreak(quizHistory, chatSessions);
+        const longestStreak = calculateLongestStreak(quizHistory, chatSessions);
+
+        // Combine recent activity (last 10 items)
+        const recentQuizzes = quizHistory.slice(0, 5).map(quiz => ({
+          ...quiz,
+          type: 'quiz' as const
+        }));
+        
+        const recentChats = chatSessions.slice(0, 5).map(chat => ({
+          ...chat,
+          type: 'chat' as const
+        }));
+        
+        const recentActivity = [...recentQuizzes, ...recentChats]
+          .sort((a, b) => {
+            const aDate = 'completed_at' in a ? a.completed_at : a.updated_at;
+            const bDate = 'completed_at' in b ? b.completed_at : b.updated_at;
+            return new Date(bDate).getTime() - new Date(aDate).getTime();
+          })
+          .slice(0, 10);
+
+        setStats({
+          totalQuizzes,
+          averageScore,
+          totalChatSessions,
+          totalStudyHours,
+          subjectProgress: userProgress,
+          recentActivity,
+          currentStreak,
+          longestStreak
+        });
+
+      } catch (error) {
+        console.error('❌ Failed to load user stats:', error);
+        setError('Failed to load statistics. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      loadUserStats();
+    }
+  }, [user]);
+
+  const calculateCurrentStreak = (quizzes: QuizSession[], chats: ChatSession[]): number => {
+    // Combine all activities
+    const activities = [
+      ...quizzes.map(q => q.completed_at),
+      ...chats.map(c => c.updated_at)
+    ].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    if (activities.length === 0) return 0;
+
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < activities.length; i++) {
+      const activityDate = new Date(activities[i]);
+      activityDate.setHours(0, 0, 0, 0);
+      
+      const daysDiff = Math.floor((today.getTime() - activityDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === streak) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
+  const calculateLongestStreak = (quizzes: QuizSession[], chats: ChatSession[]): number => {
+    // This is a simplified calculation - in production you'd want more sophisticated streak tracking
+    const activities = [
+      ...quizzes.map(q => q.completed_at),
+      ...chats.map(c => c.updated_at)
+    ];
+
+    if (activities.length === 0) return 0;
+    
+    // For now, return a simple calculation based on total activities
+    return Math.min(Math.floor(activities.length / 3), 30); // Cap at 30 days
+  };
 
   if (!user) {
     return (
