@@ -29,6 +29,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  // Apply dark class to document for Tailwind dark mode
+  useEffect(() => {
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [mode]);
+
   const toggleColorMode = () => {
     setMode((prevMode) => {
       const newMode = prevMode === 'light' ? 'dark' : 'light';

@@ -51,7 +51,7 @@ const Profile = () => {
           <Card className="lg:col-span-1">
             <CardHeader className="text-center">
               <Avatar className="h-24 w-24 mx-auto mb-4">
-                <AvatarFallback className="bg-thinkforge-purple text-white text-lg">
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                   {getInitials(user.email || '')}
                 </AvatarFallback>
               </Avatar>
@@ -148,20 +148,20 @@ const Profile = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-thinkforge-purple/10 rounded-lg">
-                <div className="text-2xl font-bold text-thinkforge-purple">0</div>
+              <div className="text-center p-4 bg-primary/10 rounded-lg border">
+                <div className="text-2xl font-bold text-primary">0</div>
                 <div className="text-sm text-muted-foreground">Quizzes Completed</div>
               </div>
-              <div className="text-center p-4 bg-green-500/10 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">0%</div>
+              <div className="text-center p-4 bg-green-500/10 rounded-lg border">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-500">0%</div>
                 <div className="text-sm text-muted-foreground">Average Score</div>
               </div>
-              <div className="text-center p-4 bg-blue-500/10 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">0</div>
+              <div className="text-center p-4 bg-blue-500/10 rounded-lg border">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-500">0</div>
                 <div className="text-sm text-muted-foreground">Chat Sessions</div>
               </div>
-              <div className="text-center p-4 bg-orange-500/10 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">0</div>
+              <div className="text-center p-4 bg-orange-500/10 rounded-lg border">
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">0</div>
                 <div className="text-sm text-muted-foreground">Study Hours</div>
               </div>
             </div>

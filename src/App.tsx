@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CssBaseline } from '@mui/material';
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useEffect } from "react";
 
 // Material UI Font imports
 import '@fontsource/roboto/300.css';
@@ -30,6 +31,61 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  useEffect(() => {
+    // Apply gradient background to body
+    document.body.classList.add('body-gradient');
+    return () => {
+      document.body.classList.remove('body-gradient');
+    };
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      <Route path="/chat" element={
+        <ProtectedRoute>
+          <Chat />
+        </ProtectedRoute>
+      } />
+      <Route path="/mcq-quiz" element={
+        <ProtectedRoute>
+          <MCQQuiz />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress" element={
+        <ProtectedRoute>
+          <Progress />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
+      <Route path="/study-plan" element={
+        <ProtectedRoute>
+          <StudyPlan />
+        </ProtectedRoute>
+      } />
+      <Route path="/flowchart" element={
+        <ProtectedRoute>
+          <FlowchartStudio />
+        </ProtectedRoute>
+      } />
+      <Route path="/debug" element={<Debug />} />
+      {/* YouTube Integration Documentation */}
+      <Route path="/youtube-docs" element={<YouTubeIntegrationDocs />} />
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </BrowserRouter>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -37,48 +93,7 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-          <Route path="/chat" element={
-            <ProtectedRoute>
-              <Chat />
-            </ProtectedRoute>
-          } />
-          <Route path="/mcq-quiz" element={
-            <ProtectedRoute>
-              <MCQQuiz />
-            </ProtectedRoute>
-          } />
-          <Route path="/progress" element={
-            <ProtectedRoute>
-              <Progress />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/study-plan" element={
-            <ProtectedRoute>
-              <StudyPlan />
-            </ProtectedRoute>
-          } />
-          <Route path="/flowchart" element={
-            <ProtectedRoute>
-              <FlowchartStudio />
-            </ProtectedRoute>
-          } />
-          <Route path="/debug" element={<Debug />} />
-          {/* YouTube Integration Documentation */}
-          <Route path="/youtube-docs" element={<YouTubeIntegrationDocs />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

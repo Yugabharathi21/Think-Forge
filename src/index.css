@@ -21,7 +21,7 @@
       222.2 84% 4.9%;
 
     --primary: 
-      222.2 47.4% 11.2%;
+      270 84% 55%;
     --primary-foreground: 
       210 40% 98%;
 
@@ -84,7 +84,7 @@
     --popover-foreground: 
       210 40% 98%;
     --primary: 
-      210 40% 98%;
+      270 84% 55%;
     --primary-foreground: 
       222.2 47.4% 11.2%;
     --secondary: 
@@ -128,7 +128,10 @@
   }
 
   body {
-    @apply bg-thinkforge-black text-foreground overflow-x-hidden;
+    @apply bg-background text-foreground overflow-x-hidden;
+  }
+
+  .body-gradient {
     background-image: 
       radial-gradient(circle at top left, rgba(126, 34, 206, 0.08) 0%, transparent 50%),
       radial-gradient(circle at bottom right, rgba(126, 34, 206, 0.08) 0%, transparent 50%);
