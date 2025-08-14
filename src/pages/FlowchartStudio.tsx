@@ -10,20 +10,24 @@ import {
   CardContent,
   CardActions,
   TextField,
-  Select,
   MenuItem,
   FormControl,
   InputLabel,
-  Chip,
-  Paper,
-  Divider,
-  IconButton,
-  Tooltip,
-  Alert,
-  CircularProgress,
-  Stack,
+  Select,
   Switch,
   FormControlLabel,
+  Chip,
+  OutlinedInput,
+  Tabs,
+  Tab,
+  Divider,
+  Alert,
+  Paper,
+  IconButton,
+  Collapse,
+  LinearProgress,
+  CircularProgress,
+  Stack,
   Fab,
   Zoom,
   Slide,
@@ -32,9 +36,19 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
-  ButtonGroup
+  ButtonGroup,
+  Tooltip
 } from '@mui/material';
 import {
+  ExpandMore as ExpandMoreIcon,
+  Settings as SettingsIcon,
+  PlayArrow as PlayArrowIcon,
+  Speed as SpeedIcon,
+  Psychology as PsychologyIcon,
+  School as SchoolIcon,
+  Assessment as AssessmentIcon,
+  MenuBook as MenuBookIcon,
+  AutoAwesome as AutoAwesomeIcon,
   AccountTree as FlowchartIcon,
   Psychology as MindMapIcon,
   PlayArrow as GenerateIcon,
@@ -46,33 +60,74 @@ import {
   School as LearnIcon,
   Lightbulb as IdeaIcon,
   Speed as FastIcon,
-  Settings as SettingsIcon,
   Add as AddIcon,
   Timeline as TimelineIcon,
   Hub as NetworkIcon,
   YouTube,
   OndemandVideo
 } from '@mui/icons-material';
+import { styled, Theme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import Layout from '@/components/layout/Layout';
-import FlowchartViewer from '@/components/flowchart/FlowchartViewer';
-import YouTubeVideoModal from '@/components/youtube/YouTubeVideoModal';
-import { flowchartService, StudyPlan, GenerationOptions } from '@/lib/flowchart';
+import Layout from '../components/layout/Layout';
+import FlowchartViewer from '../components/flowchart/FlowchartViewer';
+import EnhancedFlowchartViewer from '../components/flowchart/EnhancedFlowchartViewer';
+// Use enhanced module which also re-exports basic generateFlowchart wrapper
+import { generateFlowchart, generateEnhancedFlowchart, EnhancedFlowchartResponse } from '../lib/flowchart-enhanced';
+import {
+  FlowchartType,
+  TopicComplexity,
+  FlowchartNode,
+  FlowchartResponse,
+  TopicType,
+  TOPIC_TYPES,
+  LearningStyle,
+  TimeConstraint,
+  EnhancedFlowchartNode,
+} from '../features/chat/types'; // Some of these types are currently not defined; using local fallbacks where necessary
+
+// Local fallback type definitions (to prevent TS errors if not yet implemented in chat/types)
+// These align with the enhanced flowchart module exports
+interface LocalFlowchartNode { id: string; label: string; description?: string; type: string; position: { x: number; y: number }; }
+interface LocalFlowchartEdge { id: string; source: string; target: string; label?: string }
+interface LocalFlowchartResponse { title: string; description: string; nodes: LocalFlowchartNode[]; edges: LocalFlowchartEdge[]; estimatedTime?: string; difficulty?: string }
+// EnhancedFlowchartResponse imported from enhanced module
+
+interface ExpandMoreProps { expand?: boolean; [key: string]: unknown }
+const ExpandMoreButton = styled((props: ExpandMoreProps) => {
+  const { expand, ...other } = props as ExpandMoreProps;
+  return <IconButton {...other} />;
+})(({ theme, expand }: { theme: Theme; expand?: boolean }) => ({
+  transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
+  marginLeft: 'auto',
+  transition: theme.transitions.create('transform', {
+    duration: theme.transitions.duration.shortest,
+  }),
+}));
 
 const FlowchartStudio = () => {
   const navigate = useNavigate();
+  
+  // Basic state
   const [selectedTopic, setSelectedTopic] = useState('');
-  const [selectedType, setSelectedType] = useState<'study-plan' | 'mind-map'>('study-plan');
+  const [selectedType, setSelectedType] = useState<FlowchartType>('study-plan');
   const [customTopic, setCustomTopic] = useState('');
-  const [complexity, setComplexity] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
+  const [complexity, setComplexity] = useState<TopicComplexity>('intermediate');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPlan, setGeneratedPlan] = useState<StudyPlan | null>(null);
+  const [generatedChart, setGeneratedChart] = useState<LocalFlowchartResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [fastMode, setFastMode] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
-  const [youtubeSearchTopic, setYoutubeSearchTopic] = useState('');
+  
+  // Enhanced features state
+  const [useEnhanced, setUseEnhanced] = useState(true);
+  const [adaptiveLearning, setAdaptiveLearning] = useState(true);
+  const [includeAssessments, setIncludeAssessments] = useState(true);
+  const [includeResources, setIncludeResources] = useState(true);
+  const [learningStyle, setLearningStyle] = useState<LearningStyle>('visual');
+  const [timeConstraint, setTimeConstraint] = useState<TimeConstraint>('moderate');
+  const [focusAreas, setFocusAreas] = useState<string[]>([]);
+  const [enhancedChart, setEnhancedChart] = useState<EnhancedFlowchartResponse | null>(null);
+  const [userProgress, setUserProgress] = useState<Record<string, number>>({});
 
   const featuredTopics = [
     { 
@@ -92,311 +147,430 @@ const FlowchartStudio = () => {
       color: '#4ecdc4'
     },
     { 
+      title: 'Data Science', 
+      description: 'Analytics and statistical modeling',
+      category: 'Data',
+      difficulty: 'advanced' as const,
+      icon: '📊',
+      color: '#45b7d1'
+    },
+    { 
       title: 'Digital Marketing', 
       description: 'Online marketing strategies',
       category: 'Business',
       difficulty: 'beginner' as const,
       icon: '📱',
-      color: '#45b7d1'
-    },
-    { 
-      title: 'Data Structures', 
-      description: 'Computer science fundamentals',
-      category: 'Computer Science',
-      difficulty: 'intermediate' as const,
-      icon: '🔗',
       color: '#96ceb4'
     },
     { 
-      title: 'Project Management', 
-      description: 'Team leadership and project planning',
-      category: 'Management',
+      title: 'Photography', 
+      description: 'Art and technique of photography',
+      category: 'Arts',
       difficulty: 'beginner' as const,
-      icon: '📊',
+      icon: '📸',
       color: '#feca57'
     },
     { 
-      title: 'Cybersecurity', 
-      description: 'Information security and protection',
-      category: 'Security',
+      title: 'Blockchain', 
+      description: 'Distributed ledger technology',
+      category: 'Technology',
       difficulty: 'advanced' as const,
-      icon: '🔒',
+      icon: '⛓️',
       color: '#ff9ff3'
     }
   ];
 
-  const handleTopicSelect = useCallback((topic: string, difficulty?: 'beginner' | 'intermediate' | 'advanced') => {
-    setSelectedTopic(topic);
-    setCustomTopic('');
-    if (difficulty) {
-      setComplexity(difficulty);
-    }
-  }, []);
+  const topicToGenerate = customTopic || selectedTopic;
 
   const handleGenerate = useCallback(async () => {
-    const topic = customTopic || selectedTopic;
-    if (!topic) {
-      setError('Please select or enter a topic to generate a flowchart');
+    if (!topicToGenerate) {
+      setError('Please select or enter a topic');
       return;
     }
 
     setIsGenerating(true);
     setError(null);
-    setGeneratedPlan(null);
-    setShowWelcome(false);
+    setGeneratedChart(null);
+    setEnhancedChart(null);
 
     try {
-      const options: GenerationOptions = { complexity, fastMode };
-      let plan: StudyPlan;
-      
-      if (selectedType === 'mind-map') {
-        plan = await flowchartService.generateMindMap(topic, options);
+      if (useEnhanced) {
+        const result = await generateEnhancedFlowchart(
+          topicToGenerate,
+          selectedType,
+          complexity,
+          {
+            learningStyle,
+            timeConstraint,
+            focusAreas,
+            includeAssessments,
+            includeResources,
+            adaptiveLearning,
+            fastMode
+          }
+        );
+        setEnhancedChart(result);
       } else {
-        plan = await flowchartService.generateStudyPlan(topic, options);
+        const result = await generateFlowchart(
+          topicToGenerate,
+          selectedType,
+          complexity,
+          fastMode
+        );
+        setGeneratedChart(result);
       }
-      setGeneratedPlan(plan);
     } catch (err) {
-      setError('Failed to generate flowchart. Please check your connection and try again.');
-      console.error('Generation error:', err);
+      console.error('Error generating flowchart:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate flowchart');
     } finally {
       setIsGenerating(false);
     }
-  }, [customTopic, selectedTopic, selectedType, complexity, fastMode]);
+  }, [
+    topicToGenerate,
+    selectedType,
+    complexity,
+    fastMode,
+    useEnhanced,
+    focusAreas,
+    learningStyle,
+    timeConstraint,
+    includeAssessments,
+    includeResources,
+    adaptiveLearning
+  ]);
 
-  const handleDownload = useCallback(() => {
-    if (!generatedPlan) return;
+  // Handle node progress updates
+  const handleNodeProgress = useCallback((nodeId: string, progress: number) => {
+    setUserProgress(prev => ({
+      ...prev,
+      [nodeId]: progress
+    }));
     
-    const dataStr = JSON.stringify(generatedPlan, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = `${generatedPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_flowchart.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  }, [generatedPlan]);
+    // Save progress to localStorage
+    const savedProgress = localStorage.getItem('learning-progress') || '{}';
+    const allProgress = { ...JSON.parse(savedProgress), [nodeId]: progress };
+    localStorage.setItem('learning-progress', JSON.stringify(allProgress));
+  }, []);
 
-  const handleShare = useCallback(async () => {
-    if (!generatedPlan) return;
-    
-    const topic = customTopic || selectedTopic;
-    const shareUrl = `/flowchart?topic=${encodeURIComponent(topic)}&type=${selectedType}&complexity=${complexity}`;
-    
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: generatedPlan.title,
-          text: generatedPlan.description,
-          url: window.location.origin + shareUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.origin + shareUrl);
-        // You could add a snackbar notification here
-        console.log('Flowchart link copied to clipboard!');
-      }
-    } catch (err) {
-      console.error('Error sharing:', err);
+  // Load progress from localStorage on mount
+  React.useEffect(() => {
+    const savedProgress = localStorage.getItem('learning-progress');
+    if (savedProgress) {
+      setUserProgress(JSON.parse(savedProgress));
     }
-  }, [generatedPlan, customTopic, selectedTopic, selectedType, complexity]);
+  }, []);
 
-  const getDifficultyColor = (difficulty: string): 'success' | 'warning' | 'error' | 'primary' => {
+  const handleFocusAreaChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const value = event.target.value as string | string[];
+    setFocusAreas(typeof value === 'string' ? value.split(',') : value);
+  };
+
+  const getDifficultyColor = (difficulty: TopicComplexity) => {
     switch (difficulty) {
-      case 'beginner': return 'success';
-      case 'intermediate': return 'warning';
-      case 'advanced': return 'error';
-      default: return 'primary';
+      case 'beginner': return '#4caf50';
+      case 'intermediate': return '#ff9800';
+      case 'advanced': return '#f44336';
+      default: return '#757575';
     }
   };
 
   return (
     <Layout>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
           <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography 
-              variant="h2" 
-              component="h1" 
-              gutterBottom
-              sx={{
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: 'bold',
-                mb: 2
-              }}
-            >
-              🎯 Flowchart Studio
-            </Typography>
-            <Typography 
-              variant="h5" 
-              color="text.secondary" 
-              sx={{ mb: 3, maxWidth: 800, mx: 'auto' }}
-            >
-              Transform any topic into visual learning paths with AI-powered study plans and mind maps
-            </Typography>
-            <Stack 
-              direction="row" 
-              spacing={2} 
-              justifyContent="center" 
-              flexWrap="wrap"
-              sx={{ gap: 1 }}
-            >
-              <Chip 
-                icon={<AIIcon />} 
-                label="AI-Powered Generation" 
-                color="primary" 
-                variant="outlined" 
-              />
-              <Chip 
-                icon={<TimelineIcon />} 
-                label="Interactive Flowcharts" 
-                color="secondary" 
-                variant="outlined" 
-              />
-              <Chip 
-                icon={<NetworkIcon />} 
-                label="Smart Connections" 
-                color="info" 
-                variant="outlined" 
-              />
-            </Stack>
-          </Box>
-        </motion.div>
-
-        <Grid container spacing={4}>
-          {/* Control Panel */}
-          <Grid item xs={12} lg={4}>
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card 
-                elevation={8} 
-                sx={{ 
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }}
+            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <motion.span
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
               >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                      <FlowchartIcon />
-                    </Avatar>
-                    <Typography variant="h5" fontWeight="bold">
-                      Generate Flowchart
-                    </Typography>
-                  </Box>
-                  
-                  <Stack spacing={3}>
-                    {/* Type Selection */}
-                    <FormControl fullWidth>
-                      <InputLabel>Type</InputLabel>
-                      <Select
-                        value={selectedType}
-                        label="Type"
-                        onChange={(e) => setSelectedType(e.target.value as 'study-plan' | 'mind-map')}
-                      >
-                        <MenuItem value="study-plan">
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TimelineIcon fontSize="small" />
-                            Study Plan (Sequential Learning)
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="mind-map">
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <MindMapIcon fontSize="small" />
-                            Mind Map (Concept Mapping)
-                          </Box>
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
+                🎯 Flowchart Studio
+              </motion.span>
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              Create intelligent learning paths and mind maps with AI-powered insights
+            </Typography>
+          </Box>
 
-                    {/* Custom Topic Input */}
-                    <TextField
-                      fullWidth
-                      label="Enter Your Topic"
-                      value={customTopic}
-                      onChange={(e) => setCustomTopic(e.target.value)}
-                      placeholder="What would you like to learn?"
-                      multiline
-                      rows={3}
-                      variant="outlined"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                        }
-                      }}
+          <Grid container spacing={4}>
+            {/* Configuration Panel */}
+            <Grid item xs={12} lg={4}>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Card sx={{ height: 'fit-content', position: 'sticky', top: 20 }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                      <SettingsIcon color="primary" />
+                      <Typography variant="h6" fontWeight="bold">
+                        Configuration
+                      </Typography>
+                    </Box>
+
+                    {/* Enhanced Mode Toggle */}
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={useEnhanced}
+                          onChange={(e) => setUseEnhanced(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AutoAwesomeIcon fontSize="small" />
+                          <Typography variant="body2">Enhanced Mode</Typography>
+                        </Box>
+                      }
+                      sx={{ mb: 2 }}
                     />
 
-                    {/* Complexity Selection */}
-                    <FormControl fullWidth>
-                      <InputLabel>Complexity Level</InputLabel>
-                      <Select
-                        value={complexity}
-                        label="Complexity Level"
-                        onChange={(e) => setComplexity(e.target.value as 'beginner' | 'intermediate' | 'advanced')}
-                      >
-                        <MenuItem value="beginner">
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span>🟢 Beginner</span>
-                            <Chip label="5-8 steps" size="small" color="success" variant="outlined" />
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="intermediate">
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span>🟡 Intermediate</span>
-                            <Chip label="8-12 steps" size="small" color="warning" variant="outlined" />
-                          </Box>
-                        </MenuItem>
-                        <MenuItem value="advanced">
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span>🔴 Advanced</span>
-                            <Chip label="12+ steps" size="small" color="error" variant="outlined" />
-                          </Box>
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
+                    {/* Topic Selection */}
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      Select Topic
+                    </Typography>
+                    
+                    <Grid container spacing={1} sx={{ mb: 2 }}>
+                      {featuredTopics.map((topic) => (
+                        <Grid item xs={6} key={topic.title}>
+                          <Card
+                            variant={selectedTopic === topic.title ? "outlined" : "elevation"}
+                            sx={{
+                              cursor: 'pointer',
+                              border: selectedTopic === topic.title ? 2 : 1,
+                              borderColor: selectedTopic === topic.title ? 'primary.main' : 'grey.300',
+                              '&:hover': { transform: 'translateY(-2px)', boxShadow: 2 },
+                              transition: 'all 0.2s',
+                              height: '100%'
+                            }}
+                            onClick={() => {
+                              setSelectedTopic(topic.title);
+                              setCustomTopic('');
+                            }}
+                          >
+                            <CardContent sx={{ p: 1.5, textAlign: 'center' }}>
+                              <Typography variant="h6" sx={{ fontSize: '1.2rem', mb: 0.5 }}>
+                                {topic.icon}
+                              </Typography>
+                              <Typography variant="caption" display="block" sx={{ fontWeight: 'bold' }}>
+                                {topic.title}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={topic.difficulty}
+                                sx={{
+                                  mt: 0.5,
+                                  backgroundColor: getDifficultyColor(topic.difficulty),
+                                  color: 'white',
+                                  fontSize: '0.7rem'
+                                }}
+                              />
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
 
-                    {/* Advanced Options */}
-                    <Box>
-                      <Button 
-                        startIcon={<SettingsIcon />}
-                        onClick={() => setShowAdvanced(!showAdvanced)}
-                        variant="outlined"
-                        fullWidth
-                        sx={{ borderRadius: 2 }}
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Or enter custom topic:
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      placeholder="e.g., Quantum Computing, Cooking Basics, etc."
+                      value={customTopic}
+                      onChange={(e) => {
+                        setCustomTopic(e.target.value);
+                        if (e.target.value) setSelectedTopic('');
+                      }}
+                      variant="outlined"
+                      size="small"
+                      sx={{ mb: 3 }}
+                    />
+
+                    {/* Type and Complexity */}
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid item xs={6}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Type</InputLabel>
+                          <Select
+                            value={selectedType}
+                            label="Type"
+                            onChange={(e) => setSelectedType(e.target.value as FlowchartType)}
+                          >
+                            <MenuItem value="study-plan">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <FlowchartIcon fontSize="small" />
+                                Study Plan
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="mind-map">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <MindMapIcon fontSize="small" />
+                                Mind Map
+                              </Box>
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Complexity</InputLabel>
+                          <Select
+                            value={complexity}
+                            label="Complexity"
+                            onChange={(e) => setComplexity(e.target.value as TopicComplexity)}
+                          >
+                            <MenuItem value="beginner">Beginner</MenuItem>
+                            <MenuItem value="intermediate">Intermediate</MenuItem>
+                            <MenuItem value="advanced">Advanced</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                    </Grid>
+
+                    {/* Enhanced Options */}
+                    {useEnhanced && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
                       >
-                        {showAdvanced ? 'Hide' : 'Show'} Advanced Options
-                      </Button>
-                      
-                      <Slide direction="down" in={showAdvanced} mountOnEnter unmountOnExit>
-                        <Box sx={{ mt: 2 }}>
+                        <Divider sx={{ my: 2 }} />
+                        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                          Enhanced Options
+                        </Typography>
+
+                        {/* Learning Style */}
+                        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                          <InputLabel>Learning Style</InputLabel>
+                          <Select
+                            value={learningStyle}
+                            label="Learning Style"
+                            onChange={(e) => setLearningStyle(e.target.value as LearningStyle)}
+                          >
+                            <MenuItem value="visual">Visual</MenuItem>
+                            <MenuItem value="auditory">Auditory</MenuItem>
+                            <MenuItem value="kinesthetic">Kinesthetic</MenuItem>
+                            <MenuItem value="reading">Reading/Writing</MenuItem>
+                          </Select>
+                        </FormControl>
+
+                        {/* Time Constraint */}
+                        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                          <InputLabel>Time Constraint</InputLabel>
+                          <Select
+                            value={timeConstraint}
+                            label="Time Constraint"
+                            onChange={(e) => setTimeConstraint(e.target.value as TimeConstraint)}
+                          >
+                            <MenuItem value="intensive">Intensive (1-2 weeks)</MenuItem>
+                            <MenuItem value="moderate">Moderate (1-2 months)</MenuItem>
+                            <MenuItem value="relaxed">Relaxed (3+ months)</MenuItem>
+                          </Select>
+                        </FormControl>
+
+                        {/* Focus Areas */}
+                        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                          <InputLabel>Focus Areas</InputLabel>
+                          <Select
+                            multiple
+                            value={focusAreas}
+                            onChange={handleFocusAreaChange}
+                            input={<OutlinedInput label="Focus Areas" />}
+                            renderValue={(selected) => (
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => (
+                                  <Chip key={value} label={value} size="small" />
+                                ))}
+                              </Box>
+                            )}
+                          >
+                            <MenuItem value="theory">Theory</MenuItem>
+                            <MenuItem value="practical">Practical</MenuItem>
+                            <MenuItem value="projects">Projects</MenuItem>
+                            <MenuItem value="certification">Certification</MenuItem>
+                            <MenuItem value="career">Career</MenuItem>
+                          </Select>
+                        </FormControl>
+
+                        {/* Feature Toggles */}
+                        <Stack spacing={1}>
                           <FormControlLabel
                             control={
-                              <Switch 
-                                checked={fastMode} 
-                                onChange={(e) => setFastMode(e.target.checked)}
-                                color="primary"
+                              <Switch
+                                checked={includeAssessments}
+                                onChange={(e) => setIncludeAssessments(e.target.checked)}
+                                size="small"
                               />
                             }
                             label={
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <FastIcon fontSize="small" />
-                                Fast Generation Mode
+                                <AssessmentIcon fontSize="small" />
+                                <Typography variant="body2">Include Assessments</Typography>
                               </Box>
                             }
                           />
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={includeResources}
+                                onChange={(e) => setIncludeResources(e.target.checked)}
+                                size="small"
+                              />
+                            }
+                            label={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <MenuBookIcon fontSize="small" />
+                                <Typography variant="body2">Include Resources</Typography>
+                              </Box>
+                            }
+                          />
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={adaptiveLearning}
+                                onChange={(e) => setAdaptiveLearning(e.target.checked)}
+                                size="small"
+                              />
+                            }
+                            label={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <PsychologyIcon fontSize="small" />
+                                <Typography variant="body2">Adaptive Learning</Typography>
+                              </Box>
+                            }
+                          />
+                        </Stack>
+                      </motion.div>
+                    )}
+
+                    <Divider sx={{ my: 2 }} />
+
+                    {/* Fast Mode */}
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={fastMode}
+                          onChange={(e) => setFastMode(e.target.checked)}
+                          color="secondary"
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <SpeedIcon fontSize="small" />
+                          <Typography variant="body2">Fast Mode</Typography>
                         </Box>
-                      </Slide>
-                    </Box>
+                      }
+                      sx={{ mb: 2 }}
+                    />
 
                     {/* Generate Button */}
                     <Button
@@ -404,299 +578,74 @@ const FlowchartStudio = () => {
                       variant="contained"
                       size="large"
                       onClick={handleGenerate}
-                      disabled={isGenerating || (!customTopic && !selectedTopic)}
+                      disabled={isGenerating || !topicToGenerate}
                       startIcon={isGenerating ? <CircularProgress size={20} /> : <GenerateIcon />}
                       sx={{ 
                         py: 1.5,
-                        borderRadius: 3,
                         background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                         '&:hover': {
-                          background: 'linear-gradient(45deg, #1976D2 30%, #0288D1 90%)',
-                        },
-                        '&:disabled': {
-                          background: 'rgba(0,0,0,0.12)',
+                          background: 'linear-gradient(45deg, #1976D2 30%, #0097A7 90%)',
                         }
                       }}
                     >
-                      {isGenerating ? 'Generating...' : `Create ${selectedType === 'mind-map' ? 'Mind Map' : 'Study Plan'}`}
+                      {isGenerating ? 'Generating...' : 'Generate Learning Path'}
                     </Button>
 
-                    {/* Error Display */}
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                        >
-                          <Alert severity="error" sx={{ borderRadius: 2 }}>
-                            {error}
-                          </Alert>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {error && (
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        {error}
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
 
-                    {/* Action Buttons */}
-                    <AnimatePresence>
-                      {generatedPlan && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                        >
-                          <ButtonGroup fullWidth variant="outlined" sx={{ borderRadius: 2 }}>
-                            <Tooltip title="Download JSON">
-                              <Button onClick={handleDownload} sx={{ flex: 1 }}>
-                                <DownloadIcon />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip title="Share Flowchart">
-                              <Button onClick={handleShare} sx={{ flex: 1 }}>
-                                <ShareIcon />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip title="Use in Chat">
-                              <Button 
-                                onClick={() => navigate('/chat', { 
-                                  state: { flowchart: generatedPlan, topic: customTopic || selectedTopic } 
-                                })}
-                                sx={{ flex: 1 }}
-                              >
-                                <ViewIcon />
-                              </Button>
-                            </Tooltip>
-                          </ButtonGroup>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Quick Reset */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => {
-                    setSelectedTopic('');
-                    setCustomTopic('');
-                    setGeneratedPlan(null);
-                    setError(null);
-                    setComplexity('intermediate');
-                    setFastMode(false);
-                    setShowWelcome(true);
-                  }}
-                  sx={{ borderRadius: 3 }}
-                >
-                  Reset All
-                </Button>
-              </Box>
-            </motion.div>
-          </Grid>
-
-          {/* Visualization Panel */}
-          <Grid item xs={12} lg={8}>
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Card 
-                elevation={8} 
-                sx={{ 
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  minHeight: 700
-                }}
+            {/* Flowchart Display */}
+            <Grid item xs={12} lg={8}>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <CardContent sx={{ p: 4, height: '100%' }}>
-                  {showWelcome && !isGenerating && !generatedPlan && (
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      minHeight: 500,
-                      textAlign: 'center'
-                    }}>
+                {(generatedChart || enhancedChart) ? (
+                  useEnhanced && enhancedChart ? (
+                    <EnhancedFlowchartViewer
+                      data={enhancedChart}
+                      onNodeProgress={handleNodeProgress}
+                      userProgress={userProgress}
+                    />
+                  ) : generatedChart ? (
+                    <FlowchartViewer data={generatedChart} />
+                  ) : null
+                ) : (
+                  <Card sx={{ height: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CardContent sx={{ textAlign: 'center' }}>
                       <motion.div
                         animate={{ 
-                          rotate: [0, 10, -10, 0],
+                          rotate: 360,
                           scale: [1, 1.1, 1]
                         }}
                         transition={{ 
-                          duration: 4,
-                          repeat: Infinity,
-                          ease: "easeInOut"
+                          rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
                         }}
                       >
-                        <FlowchartIcon sx={{ fontSize: 120, color: 'primary.main', mb: 3, opacity: 0.7 }} />
+                        <FlowchartIcon sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
                       </motion.div>
-                      <Typography variant="h4" gutterBottom fontWeight="bold">
-                        Ready to Create Amazing Flowcharts! 🚀
+                      <Typography variant="h6" color="text.secondary" gutterBottom>
+                        Ready to create your learning path!
                       </Typography>
-                      <Typography variant="h6" color="text.secondary" sx={{ mb: 4, maxWidth: 600 }}>
-                        Choose from featured topics below or enter your own custom topic to generate AI-powered study plans and mind maps
+                      <Typography variant="body2" color="text.secondary">
+                        Select a topic and click "Generate Learning Path" to get started
                       </Typography>
-
-                      {/* Featured Topics Grid */}
-                      <Grid container spacing={2} sx={{ maxWidth: 800 }}>
-                        {featuredTopics.map((topic, index) => (
-                          <Grid item xs={12} sm={6} md={4} key={topic.title}>
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.5, delay: index * 0.1 }}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <Card 
-                                sx={{ 
-                                  cursor: 'pointer',
-                                  borderRadius: 3,
-                                  border: '2px solid transparent',
-                                  '&:hover': {
-                                    borderColor: topic.color,
-                                    boxShadow: `0 8px 25px ${topic.color}30`
-                                  },
-                                  transition: 'all 0.3s ease'
-                                }}
-                                onClick={() => handleTopicSelect(topic.title, topic.difficulty)}
-                              >
-                                <CardContent sx={{ textAlign: 'center', p: 2 }}>
-                                  <Typography variant="h3" sx={{ mb: 1 }}>
-                                    {topic.icon}
-                                  </Typography>
-                                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                                    {topic.title}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    {topic.description}
-                                  </Typography>
-                                  <Stack direction="row" spacing={1} justifyContent="center">
-                                    <Chip 
-                                      label={topic.category} 
-                                      size="small" 
-                                      variant="outlined"
-                                    />
-                                    <Chip 
-                                      label={topic.difficulty} 
-                                      size="small" 
-                                      color={getDifficultyColor(topic.difficulty)}
-                                      variant="filled"
-                                    />
-                                  </Stack>
-                                </CardContent>
-                                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                                  <Button
-                                    size="small"
-                                    startIcon={<YouTube />}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setYoutubeSearchTopic(topic.title);
-                                      setYoutubeModalOpen(true);
-                                    }}
-                                    sx={{
-                                      color: topic.color,
-                                      borderColor: topic.color,
-                                      '&:hover': {
-                                        backgroundColor: `${topic.color}10`,
-                                        borderColor: topic.color,
-                                      }
-                                    }}
-                                    variant="outlined"
-                                  >
-                                    Watch Videos
-                                  </Button>
-                                </CardActions>
-                              </Card>
-                            </motion.div>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Box>
-                  )}
-
-                  {isGenerating && (
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      minHeight: 500
-                    }}>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      >
-                        <CircularProgress size={80} sx={{ mb: 4 }} />
-                      </motion.div>
-                      <Typography variant="h4" gutterBottom fontWeight="bold">
-                        🤖 AI is Creating Your Flowchart...
-                      </Typography>
-                      <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 2 }}>
-                        Analyzing "{customTopic || selectedTopic}" and building a {complexity} {selectedType === 'mind-map' ? 'mind map' : 'study plan'}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" align="center">
-                        {fastMode ? '⚡ Fast mode enabled - Quick generation' : '🧠 Deep analysis mode - Comprehensive structure'}
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {generatedPlan && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.7 }}
-                    >
-                      <FlowchartViewer
-                        nodes={generatedPlan.nodes}
-                        edges={generatedPlan.edges}
-                        title={generatedPlan.title}
-                        description={generatedPlan.description}
-                        className="w-full"
-                      />
-                    </motion.div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+                    </CardContent>
+                  </Card>
+                )}
+              </motion.div>
+            </Grid>
           </Grid>
-        </Grid>
-
-        {/* Floating Action Button */}
-        <Zoom in={!!generatedPlan}>
-          <Fab
-            color="primary"
-            sx={{
-              position: 'fixed',
-              bottom: 24,
-              right: 24,
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            }}
-            onClick={() => navigate('/chat', { 
-              state: { flowchart: generatedPlan, topic: customTopic || selectedTopic } 
-            })}
-          >
-            <AIIcon />
-          </Fab>
-        </Zoom>
-
-        {/* YouTube Video Modal */}
-        <YouTubeVideoModal
-          open={youtubeModalOpen}
-          onClose={() => setYoutubeModalOpen(false)}
-          topic={youtubeSearchTopic}
-        />
+        </motion.div>
       </Container>
     </Layout>
   );

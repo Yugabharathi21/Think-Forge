@@ -73,7 +73,8 @@ export interface UserProgress {
 export interface ChartDataPoint {
   name: string;
   score: number;
-  [key: string]: any;
+  // Allow additional numeric properties (e.g., for multiple datasets)
+  [key: string]: string | number;
 }
 
 export interface SubjectDataPoint {
