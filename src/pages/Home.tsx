@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import ProfileCard from '@/components/ui/ProfileCard';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -95,6 +96,49 @@ const Home = () => {
       role: "Medical Student",
       content: "Having an AI tutor available 24/7 has been a game-changer for my medical studies.",
       rating: 5
+    }
+  ];
+
+  const teamMembers = [
+    {
+      name: "Alex Rodriguez",
+      title: "AI Research Lead",
+      handle: "alexai",
+      status: "Online",
+      contactText: "Connect",
+      avatarUrl: "/public/placeholder.svg"
+    },
+    {
+      name: "Sarah Kim",
+      title: "UX Designer",
+      handle: "sarahux",
+      status: "Online",
+      contactText: "Connect",
+      avatarUrl: "/public/placeholder.svg"
+    },
+    {
+      name: "Michael Chen",
+      title: "Full Stack Developer",
+      handle: "mikedev",
+      status: "Online",
+      contactText: "Connect",
+      avatarUrl: "/public/placeholder.svg"
+    },
+    {
+      name: "Emily Watson",
+      title: "Product Manager",
+      handle: "emilypm",
+      status: "Online",
+      contactText: "Connect",
+      avatarUrl: "/public/placeholder.svg"
+    },
+    {
+      name: "David Park",
+      title: "Data Scientist",
+      handle: "daviddata",
+      status: "Online",
+      contactText: "Connect",
+      avatarUrl: "/public/placeholder.svg"
     }
   ];
 
@@ -280,6 +324,58 @@ const Home = () => {
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Meet Our Team Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Meet Our Team
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              The brilliant minds behind Think-Forge AI, working together to revolutionize education.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 md:gap-28 lg:gap-32 justify-items-center max-w-6xl mx-auto">
+            {teamMembers.slice(0, 3).map((member, index) => (
+              <div key={index} className="w-full max-w-sm mb-16">
+                <ProfileCard
+                  name={member.name}
+                  title={member.title}
+                  handle={member.handle}
+                  status={member.status}
+                  contactText={member.contactText}
+                  avatarUrl={member.avatarUrl}
+                  showUserInfo={true}
+                  enableTilt={true}
+                  enableMobileTilt={false}
+                  onContactClick={() => console.log(`Contact ${member.name} clicked`)}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 md:gap-28 lg:gap-32 justify-items-center max-w-4xl mx-auto mt-16">
+            {teamMembers.slice(3, 5).map((member, index) => (
+              <div key={index + 3} className="w-full max-w-sm mb-16">
+                <ProfileCard
+                  name={member.name}
+                  title={member.title}
+                  handle={member.handle}
+                  status={member.status}
+                  contactText={member.contactText}
+                  avatarUrl={member.avatarUrl}
+                  showUserInfo={true}
+                  enableTilt={true}
+                  enableMobileTilt={false}
+                  onContactClick={() => console.log(`Contact ${member.name} clicked`)}
+                />
+              </div>
             ))}
           </div>
         </div>
