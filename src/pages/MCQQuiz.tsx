@@ -171,10 +171,6 @@ const MCQQuiz = () => {
 
   const startQuiz = async () => {
     if (!subject || !subtopic) return;
-    
-<<<<<<< HEAD
-    console.log(`🎯 Starting ${difficulty} quiz for ${subject} - ${subtopic}...`);
-=======
     // Check proctoring system readiness if anti-cheat is enabled
     if (antiCheatEnabled && !proctoringSystemReady) {
       setShowAntiCheatSetup(true);
@@ -185,9 +181,7 @@ const MCQQuiz = () => {
       });
       return;
     }
-    
-    console.log(`🎯 Starting ${difficulty} quiz for ${subject}...`);
->>>>>>> ef3a051a198a97542122e0cd95f5eeb8ec113d5d
+    console.log(`🎯 Starting ${difficulty} quiz for ${subject} - ${subtopic}...`);
     setLoading(true);
     
     try {
