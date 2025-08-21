@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import ProfileCard from '@/components/ui/ProfileCard';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -95,6 +96,36 @@ const Home = () => {
       role: "Medical Student",
       content: "Having an AI tutor available 24/7 has been a game-changer for my medical studies.",
       rating: 5
+    }
+  ];
+
+  const teamMembers = [
+    {
+      name: "Yuga Bharathi J",
+      title: "Developer",
+      handle: "Front-end & Backend",
+      status: "Online",
+      contactText: "Connect",
+      ConnectLink : "Yugabharathi21.netlify.app",
+      avatarUrl: "/ybj.png"
+    },
+    {
+      name: "Shaswatth D",
+      title: "AI Engineer",
+      handle: "ML and Ollama",
+      status: "Online",
+      contactText: "Connect",
+      ConnectLink : "www.github.com/IamShaswatth",
+      avatarUrl: "/sha.png"
+    },
+    {
+      name: "Dharsan S P",
+      title: "Database Admin",
+      handle: "Database",
+      status: "Online",
+      contactText: "Connect",
+      ConnectLink : "https://github.com/Dharsan5",
+      avatarUrl: "/dsp.png"
     }
   ];
 
@@ -284,6 +315,73 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Meet Our Team Section */}
+<section className="py-20 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-800 dark:to-gray-900">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-16">
+      <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        Meet Our Team
+      </h2>
+      <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+        The brilliant minds behind Think-Forge AI, working together to revolutionize education.
+      </p>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 md:gap-28 lg:gap-32 justify-items-center max-w-6xl mx-auto">
+      {teamMembers.slice(0, 3).map((member, index) => (
+        <div key={index} className="w-full max-w-sm mb-16">
+          <ProfileCard
+            name={member.name}
+            title={member.title}
+            handle={member.handle}
+            status={member.status}
+            contactText={member.contactText}
+            avatarUrl={member.avatarUrl}
+            showUserInfo={true}
+            enableTilt={true}
+            enableMobileTilt={false}
+            onContactClick={() => {
+              if (member.ConnectLink) {
+                // Add https:// if not present
+                const url = member.ConnectLink.startsWith('http') 
+                  ? member.ConnectLink 
+                  : `https://${member.ConnectLink}`;
+                window.open(url, '_blank');
+              }
+            }}
+          />
+        </div>
+      ))}
+    </div>
+   
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-20 md:gap-28 lg:gap-32 justify-items-center max-w-4xl mx-auto mt-16">
+      {teamMembers.slice(3, 5).map((member, index) => (
+        <div key={index + 3} className="w-full max-w-sm mb-16">
+          <ProfileCard
+            name={member.name}
+            title={member.title}
+            handle={member.handle}
+            status={member.status}
+            contactText={member.contactText}
+            avatarUrl={member.avatarUrl}
+            showUserInfo={true}
+            enableTilt={true}
+            enableMobileTilt={false}
+            onContactClick={() => {
+              if (member.ConnectLink) {
+                // Add https:// if not present
+                const url = member.ConnectLink.startsWith('http') 
+                  ? member.ConnectLink 
+                  : `https://${member.ConnectLink}`;
+                window.open(url, '_blank');
+              }
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700">

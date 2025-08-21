@@ -13,6 +13,7 @@ import type {
   ProgressChartData
 } from './supabase';
 import type { MCQQuestionData } from '@/features/chat/types';
+import type { AntiCheatReport } from '@/components/proctoring/types';
 
 // Database connection test
 export const testDatabaseConnection = async (): Promise<boolean> => {
@@ -182,7 +183,8 @@ export const quizService = {
     correctAnswers: number,
     questions: MCQQuestionData[],
     userAnswers: number[],
-    difficulty: string = 'medium'
+    difficulty: string = 'medium',
+    antiCheatReport?: AntiCheatReport | null
   ): Promise<QuizSession | null> {
     console.log('💾 Saving quiz result to database...', {
       userId,
@@ -190,7 +192,8 @@ export const quizService = {
       totalQuestions,
       correctAnswers,
       difficulty,
-      score: Math.round((correctAnswers / totalQuestions) * 100)
+      score: Math.round((correctAnswers / totalQuestions) * 100),
+      antiCheatReport: antiCheatReport ? 'Present' : 'None'
     });
 
     const score = Math.round((correctAnswers / totalQuestions) * 100);
@@ -205,7 +208,8 @@ export const quizService = {
           correct_answers: correctAnswers,
           score,
           difficulty,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          anti_cheat_report: antiCheatReport ? JSON.stringify(antiCheatReport) : null
         })
         .select()
         .single();

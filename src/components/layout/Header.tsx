@@ -1,5 +1,6 @@
-
-import { useState } from 'react';
+import React, { useState } from 'react';
+// Debug trace to ensure module loads; remove once fixed
+console.debug('[Header module] loaded');
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { 
   AppBar, 
@@ -23,7 +24,7 @@ import {
   Divider
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import BrainIcon from '@mui/icons-material/Psychology';
+import HomeIcon from '@mui/icons-material/Home';
 import ChatIcon from '@mui/icons-material/Chat';
 import QuizIcon from '@mui/icons-material/Quiz';
 import ProgressIcon from '@mui/icons-material/Leaderboard';
@@ -33,12 +34,14 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import BugReportIcon from '@mui/icons-material/BugReport';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+// Logo path for ThinkForge branding (updated path)
+const logoPath = '/Logo/thinkforge1.png';
+
+// Exporting directly as a default function declaration to ensure Vite always picks up the default export
+function Header(): React.ReactElement {
   const { user, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
   const { mode, toggleColorMode } = useTheme();
@@ -70,7 +73,7 @@ const Header = () => {
   };
 
   const navItems = [
-    { name: 'Home', path: '/', icon: <BrainIcon /> },
+    { name: 'Home', path: '/', icon: <HomeIcon /> },
     { name: 'AI Chat', path: '/chat', icon: <ChatIcon /> },
     { name: 'MCQ Quiz', path: '/mcq-quiz', icon: <QuizIcon /> },
     { name: 'Progress', path: '/progress', icon: <ProgressIcon /> },
@@ -80,8 +83,8 @@ const Header = () => {
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-        <BrainIcon sx={{ mr: 1, color: 'primary.main' }} />
-        <Typography variant="h6" fontWeight="bold" sx={{ background: 'linear-gradient(to right, #861aff, #c87eff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <img src={logoPath} alt="ThinkForge Logo" style={{ width: 36, height: 36, marginRight: 8 }} />
+  <Typography variant="h6" fontWeight="bold" sx={{ background: 'linear-gradient(to right, #15cfbd, #158fcf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           ThinkForge
         </Typography>
       </Box>
@@ -159,10 +162,11 @@ const Header = () => {
   return (
     <>
       <AppBar position="fixed" color="default" elevation={1} sx={{ 
-        bgcolor: mode === 'dark' ? 'background.paper' : 'white',
-        backdropFilter: 'blur(10px)',
+        bgcolor: mode === 'dark' ? 'rgba(10,15,15,0.85)' : 'rgba(255,255,255,0.85)',
+        backdropFilter: 'blur(14px) saturate(140%)',
         borderBottom: '1px solid',
         borderColor: 'divider',
+        boxShadow: '0 2px 12px rgba(21,207,189,0.15)',
       }}>
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
@@ -180,42 +184,45 @@ const Header = () => {
 
             {/* Logo */}
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <BrainIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1, color: 'primary.main' }} />
-              <Typography
-                variant="h6"
-                noWrap
-                component={RouterLink}
-                to="/"
-                sx={{
-                  display: { xs: 'none', md: 'flex' },
-                  fontWeight: 700,
-                  background: 'linear-gradient(to right, #861aff, #c87eff)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textDecoration: 'none',
-                }}
-              >
-                ThinkForge
-              </Typography>
-              
+              {/* Desktop Logo */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+                <img src={logoPath} alt="ThinkForge Logo" style={{ width: 36, height: 36, marginRight: 8 }} />
+                <Typography
+                  variant="h6"
+                  noWrap
+                  component={RouterLink}
+                  to="/"
+                  sx={{
+                    fontWeight: 700,
+                    background: 'linear-gradient(to right, #15cfbd, #158fcf)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textDecoration: 'none',
+                  }}
+                >
+                  ThinkForge
+                </Typography>
+              </Box>
               {/* Mobile Logo */}
-              <Typography
-                variant="h6"
-                noWrap
-                component={RouterLink}
-                to="/"
-                sx={{
-                  display: { xs: 'flex', md: 'none' },
-                  flexGrow: 1,
-                  fontWeight: 700,
-                  background: 'linear-gradient(to right, #861aff, #c87eff)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textDecoration: 'none',
-                }}
-              >
-                ThinkForge
-              </Typography>
+              <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+                <img src={logoPath} alt="ThinkForge Logo" style={{ width: 32, height: 32, marginRight: 8 }} />
+                <Typography
+                  variant="h6"
+                  noWrap
+                  component={RouterLink}
+                  to="/"
+                  sx={{
+                    flexGrow: 1,
+                    fontWeight: 700,
+                    background: 'linear-gradient(to right, #15cfbd, #158fcf)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textDecoration: 'none',
+                  }}
+                >
+                  ThinkForge
+                </Typography>
+              </Box>
             </Box>
 
             {/* Desktop Navigation */}
@@ -228,7 +235,22 @@ const Header = () => {
                   sx={{ 
                     color: 'text.primary', 
                     mx: 1,
-                    '&:hover': { color: 'primary.main' }
+                    position: 'relative',
+                    '&:hover': { color: 'primary.main' },
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      left: 8,
+                      right: 8,
+                      bottom: 4,
+                      height: 2,
+                      borderRadius: 1,
+                      background: 'linear-gradient(to right,#15cfbd,#158fcf)',
+                      opacity: 0,
+                      transform: 'scaleX(0)',
+                      transition: 'all .25s ease'
+                    },
+                    '&:hover::after': { opacity: 1, transform: 'scaleX(1)' }
                   }}
                 >
                   {item.name}
@@ -324,6 +346,8 @@ const Header = () => {
       </Drawer>
     </>
   );
-};
+}
 
 export default Header;
+// Also provide a named export temporarily to avoid runtime confusion during debugging
+export { Header };

@@ -3,17 +3,19 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button as ButtonUI } from '@/components/ui/button'; // Renamed to avoid conflicts
 import MCQQuestion from '@/components/chat/MCQQuestion';
+import AntiCheatSystem from '@/components/proctoring/AntiCheatSystem';
 import { subjects, subjectSubtopics } from '@/features/chat/constants';
 import { useToast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormControl } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { BookOpen, ArrowRight, Brain, Loader2, Target, TrendingUp } from 'lucide-react';
+import { BookOpen, ArrowRight, Brain, Loader2, Target, TrendingUp, Shield, AlertTriangle } from 'lucide-react';
 import { generateQuizQuestions, analyzeMistake, analyzeQuizPerformance } from '@/lib/ollama';
 import { quizService, testDatabaseConnection } from '@/lib/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { MCQQuestionData } from '@/features/chat/types';
+import { ViolationType, AntiCheatReport, generateAntiCheatReport } from '@/components/proctoring/types';
 import { motion } from 'framer-motion';
 // Material UI imports
 import { Box, Typography, Button, useTheme, Radio, RadioGroup as MUIRadioGroup, FormControlLabel, FormControl as MUIFormControl, FormLabel, Paper } from '@mui/material';
@@ -51,6 +53,13 @@ const MCQQuiz = () => {
   const [saving, setSaving] = useState(false);
   const [progressData, setProgressData] = useState<UserProgress[]>([]);
   const [progressLoading, setProgressLoading] = useState(false);
+  
+  // Anti-cheat system states
+  const [antiCheatEnabled, setAntiCheatEnabled] = useState(true);
+  const [proctoringSystemReady, setProctoringSystemReady] = useState(false);
+  const [violations, setViolations] = useState<ViolationType[]>([]);
+  const [sessionStartTime] = useState(new Date());
+  const [showAntiCheatSetup, setShowAntiCheatSetup] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -108,6 +117,29 @@ const MCQQuiz = () => {
 
   const currentQuestion = questions[currentQuestionIdx];
 
+  // Anti-cheat handlers
+  const handleViolation = (violation: ViolationType, severity: 'low' | 'medium' | 'high') => {
+    setViolations(prev => [...prev, violation]);
+    
+    // Handle severe violations
+    if (severity === 'high' && violations.filter(v => v.severity === 'high').length >= 3) {
+      toast({
+        title: "Quiz Terminated",
+        description: "Too many security violations detected. Quiz has been terminated.",
+        variant: "destructive",
+      });
+      exitQuiz();
+    }
+  };
+
+  const handleProctoringSystemReady = (ready: boolean) => {
+    setProctoringSystemReady(ready);
+  };
+
+  const generateAntiCheatReportForQuiz = (): AntiCheatReport => {
+    return generateAntiCheatReport(violations, sessionStartTime, proctoringSystemReady, violations.filter(v => v.type === 'tab_switch').length);
+  };
+
   const handleSubjectSelection = (selectedSubject: string) => {
     console.log('📚 Subject selected:', selectedSubject);
     setSubject(selectedSubject);
@@ -140,7 +172,22 @@ const MCQQuiz = () => {
   const startQuiz = async () => {
     if (!subject || !subtopic) return;
     
+<<<<<<< HEAD
     console.log(`🎯 Starting ${difficulty} quiz for ${subject} - ${subtopic}...`);
+=======
+    // Check proctoring system readiness if anti-cheat is enabled
+    if (antiCheatEnabled && !proctoringSystemReady) {
+      setShowAntiCheatSetup(true);
+      toast({
+        title: "Proctoring System Required",
+        description: "Please set up the proctoring system before starting the quiz.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log(`🎯 Starting ${difficulty} quiz for ${subject}...`);
+>>>>>>> ef3a051a198a97542122e0cd95f5eeb8ec113d5d
     setLoading(true);
     
     try {
@@ -164,6 +211,7 @@ const MCQQuiz = () => {
       setMistakeAnalysis(null);
       setQuizAnalysis(null);
       setIsAnswerSubmitted(false);
+      setViolations([]);
       
       console.log(`✅ Quiz started with ${generatedQuestions.length} questions`);
       
@@ -258,6 +306,8 @@ const MCQQuiz = () => {
       
       // Save quiz results to database
       console.log('💾 Saving quiz results to database...');
+      const antiCheatReport = antiCheatEnabled ? generateAntiCheatReportForQuiz() : null;
+      
       await quizService.saveQuizResult(
         user.id,
         `${subject} - ${subtopic}`,
@@ -265,7 +315,8 @@ const MCQQuiz = () => {
         score.correct,
         questions,
         userAnswers,
-        difficulty
+        difficulty,
+        antiCheatReport
       );
       
       setQuizCompleted(true);
@@ -300,6 +351,8 @@ const MCQQuiz = () => {
     setScore({ correct: 0, total: 0 });
     setMistakeAnalysis(null);
     setIsAnswerSubmitted(false);
+    setViolations([]);
+    setShowAntiCheatSetup(false);
   };
 
   useEffect(() => {
@@ -390,11 +443,84 @@ const MCQQuiz = () => {
             MCQ Quiz
           </Typography>
           
+          {/* Anti-Cheat System Setup */}
+          {(antiCheatEnabled && (showAntiCheatSetup || !subject)) && (
+            <Box sx={{ mb: 4 }}>
+              <Paper 
+                elevation={2}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: mode === 'dark' ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+                  border: '1px solid',
+                  borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Shield className="mr-2 text-blue-600" style={{ fontSize: 24 }} />
+                  <Typography variant="h6" fontWeight={500}>
+                    Proctoring System Setup
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  This quiz uses an anti-cheat system to ensure integrity. Please set up the proctoring system before starting.
+                </Typography>
+                
+                <AntiCheatSystem
+                  onViolation={handleViolation}
+                  onSystemReady={handleProctoringSystemReady}
+                  isQuizActive={quizStarted}
+                  strictMode={true}
+                />
+                
+                {proctoringSystemReady && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'success.main', color: 'success.contrastText', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Shield className="mr-1" style={{ fontSize: 16 }} />
+                      Proctoring system is ready. You can now start the quiz.
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
+            </Box>
+          )}
+          
           {!subject && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Typography variant="h5" sx={{ fontWeight: 500, color: 'text.primary' }}>
                 Choose a Subject
               </Typography>
+              
+              {/* Anti-cheat toggle */}
+              <Box sx={{ 
+                p: 2, 
+                bgcolor: mode === 'dark' ? 'rgba(30, 30, 30, 0.5)' : 'rgba(245, 245, 245, 0.8)',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Shield className="mr-2 text-blue-600" style={{ fontSize: 20 }} />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={500}>
+                      Enable Proctoring System
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Camera monitoring and anti-cheat features
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button
+                  variant={antiCheatEnabled ? "contained" : "outlined"}
+                  color="primary"
+                  size="small"
+                  onClick={() => setAntiCheatEnabled(!antiCheatEnabled)}
+                  sx={{ textTransform: 'none' }}
+                >
+                  {antiCheatEnabled ? 'Enabled' : 'Disabled'}
+                </Button>
+              </Box>
               
               <Box 
                 sx={{ 
@@ -886,6 +1012,33 @@ const MCQQuiz = () => {
                       </Box>
                     ))}
                   </Box>
+                </Paper>
+              )}
+
+              {/* Anti-Cheat Report */}
+              {antiCheatEnabled && violations.length > 0 && (
+                <Paper 
+                  elevation={0}
+                  sx={{
+                    p: 2, 
+                    borderRadius: 2,
+                    bgcolor: mode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
+                    border: '1px solid',
+                    borderColor: mode === 'dark' ? 'rgba(211, 47, 47, 0.2)' : 'rgba(211, 47, 47, 0.15)'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <AlertTriangle className="mr-1 text-red-600" style={{ fontSize: 18 }} />
+                    <Typography variant="subtitle2" color="error">
+                      Security Report
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    {violations.length} violation(s) detected during the quiz.
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Risk Score: {generateAntiCheatReportForQuiz().riskScore}/100
+                  </Typography>
                 </Paper>
               )}
 
