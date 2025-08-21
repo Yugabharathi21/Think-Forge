@@ -14,6 +14,140 @@ export const subjects = [
   'Economics'
 ];
 
+// Comprehensive subtopics for each subject
+export const subjectSubtopics: Record<string, string[]> = {
+  'Mathematics': [
+    'Algebra',
+    'Calculus',
+    'Geometry',
+    'Trigonometry',
+    'Statistics',
+    'Linear Algebra',
+    'Number Theory',
+    'Probability',
+    'Differential Equations',
+    'Discrete Mathematics',
+    'Functions',
+    'Equations',
+    'Inequalities',
+    'Matrices',
+    'Vectors',
+    'Complex Numbers',
+    'Sequences',
+    'Series',
+    'Integration',
+    'Differentiation'
+  ],
+  'Physics': [
+    'Mechanics',
+    'Thermodynamics',
+    'Electromagnetism',
+    'Optics',
+    'Quantum Physics',
+    'Nuclear Physics',
+    'Astrophysics',
+    'Fluid Dynamics',
+    'Wave Physics',
+    'Relativity'
+  ],
+  'Chemistry': [
+    'Organic Chemistry',
+    'Inorganic Chemistry',
+    'Physical Chemistry',
+    'Analytical Chemistry',
+    'Biochemistry',
+    'Electrochemistry',
+    'Thermochemistry',
+    'Chemical Kinetics',
+    'Atomic Structure',
+    'Chemical Bonding'
+  ],
+  'Biology': [
+    'Cell Biology',
+    'Genetics',
+    'Ecology',
+    'Evolution',
+    'Anatomy',
+    'Physiology',
+    'Microbiology',
+    'Biochemistry',
+    'Molecular Biology',
+    'Botany'
+  ],
+  'Computer Science': [
+    'Data Structures',
+    'Algorithms',
+    'Programming Languages',
+    'Database Systems',
+    'Computer Networks',
+    'Operating Systems',
+    'Software Engineering',
+    'Artificial Intelligence',
+    'Machine Learning',
+    'Web Development',
+    'Cybersecurity',
+    'Computer Architecture',
+    'Arrays',
+    'Linked Lists',
+    'Stacks',
+    'Queues',
+    'Trees',
+    'Graphs',
+    'Hash Tables',
+    'Sorting Algorithms',
+    'Search Algorithms',
+    'Dynamic Programming'
+  ],
+  'History': [
+    'Ancient History',
+    'Medieval History',
+    'Modern History',
+    'World War I',
+    'World War II',
+    'American History',
+    'European History',
+    'Asian History',
+    'African History',
+    'Industrial Revolution'
+  ],
+  'Geography': [
+    'Physical Geography',
+    'Human Geography',
+    'Economic Geography',
+    'Political Geography',
+    'Climatology',
+    'Oceanography',
+    'Geomorphology',
+    'Cartography',
+    'Environmental Geography',
+    'Urban Geography'
+  ],
+  'Literature': [
+    'Poetry',
+    'Prose',
+    'Drama',
+    'Novels',
+    'Short Stories',
+    'Classical Literature',
+    'Modern Literature',
+    'World Literature',
+    'Literary Criticism',
+    'Creative Writing'
+  ],
+  'Economics': [
+    'Microeconomics',
+    'Macroeconomics',
+    'International Economics',
+    'Development Economics',
+    'Labor Economics',
+    'Public Economics',
+    'Financial Economics',
+    'Behavioral Economics',
+    'Game Theory',
+    'Econometrics'
+  ]
+};
+
 export const learningModes: LearningMode[] = [
   {
     id: 'mcq',

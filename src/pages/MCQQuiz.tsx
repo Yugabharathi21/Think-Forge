@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button as ButtonUI } from '@/components/ui/button'; // Renamed to avoid conflicts
 import MCQQuestion from '@/components/chat/MCQQuestion';
-import { subjects } from '@/features/chat/constants';
+import { subjects, subjectSubtopics } from '@/features/chat/constants';
 import { useToast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,7 @@ const MCQQuiz = () => {
   const theme = useTheme();
   const { mode } = useAppTheme();
   const [subject, setSubject] = useState<string | null>(null);
+  const [subtopic, setSubtopic] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [quizStarted, setQuizStarted] = useState(false);
@@ -110,6 +111,21 @@ const MCQQuiz = () => {
   const handleSubjectSelection = (selectedSubject: string) => {
     console.log('📚 Subject selected:', selectedSubject);
     setSubject(selectedSubject);
+    setSubtopic(null);
+    setQuestions([]);
+    setUserAnswers([]);
+    setCurrentQuestionIdx(0);
+    setQuizStarted(false);
+    setQuizCompleted(false);
+    setScore({ correct: 0, total: 0 });
+    setMistakeAnalysis(null);
+    setQuizAnalysis(null);
+    setIsAnswerSubmitted(false);
+  };
+
+  const handleSubtopicSelection = (selectedSubtopic: string) => {
+    console.log('📖 Subtopic selected:', selectedSubtopic);
+    setSubtopic(selectedSubtopic);
     setQuestions([]);
     setUserAnswers([]);
     setCurrentQuestionIdx(0);
@@ -122,13 +138,13 @@ const MCQQuiz = () => {
   };
 
   const startQuiz = async () => {
-    if (!subject) return;
+    if (!subject || !subtopic) return;
     
-    console.log(`🎯 Starting ${difficulty} quiz for ${subject}...`);
+    console.log(`🎯 Starting ${difficulty} quiz for ${subject} - ${subtopic}...`);
     setLoading(true);
     
     try {
-      const generatedQuestions = await generateQuizQuestions(subject, 5, difficulty);
+      const generatedQuestions = await generateQuizQuestions(`${subject} - ${subtopic}`, 5, difficulty);
       
       if (generatedQuestions.length === 0) {
         toast({
@@ -153,7 +169,7 @@ const MCQQuiz = () => {
       
       toast({
         title: "Quiz Started!",
-        description: `${generatedQuestions.length} questions loaded for ${subject}`,
+        description: `${generatedQuestions.length} questions loaded for ${subject} - ${subtopic}`,
       });
     } catch (error) {
       console.error('❌ Error starting quiz:', error);
@@ -227,7 +243,7 @@ const MCQQuiz = () => {
   };
 
   const completeQuiz = async () => {
-    if (!subject || !user) {
+    if (!subject || !subtopic || !user) {
       setQuizCompleted(true);
       return;
     }
@@ -237,14 +253,14 @@ const MCQQuiz = () => {
     try {
       // Generate comprehensive analysis
       console.log('📊 Generating quiz analysis...');
-      const analysis = await analyzeQuizPerformance(subject, questions, userAnswers, user.id);
+      const analysis = await analyzeQuizPerformance(`${subject} - ${subtopic}`, questions, userAnswers, user.id);
       setQuizAnalysis(analysis);
       
       // Save quiz results to database
       console.log('💾 Saving quiz results to database...');
       await quizService.saveQuizResult(
         user.id,
-        subject,
+        `${subject} - ${subtopic}`,
         questions.length,
         score.correct,
         questions,
@@ -278,6 +294,7 @@ const MCQQuiz = () => {
   const exitQuiz = () => {
     setQuizStarted(false);
     setSubject(null);
+    setSubtopic(null);
     setQuestions([]);
     setCurrentQuestionIdx(0);
     setScore({ correct: 0, total: 0 });
@@ -426,9 +443,91 @@ const MCQQuiz = () => {
               </Box>
             </Box>
           )}
-          
-          {subject && !quizStarted && !quizCompleted && (
+
+          {subject && !subtopic && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Button
+                  variant="text"
+                  onClick={() => setSubject(null)}
+                  sx={{ 
+                    textTransform: 'none',
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' }
+                  }}
+                >
+                  ← Back to Subjects
+                </Button>
+              </Box>
+              
+              <Typography variant="h5" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                Choose a Topic in {subject}
+              </Typography>
+              
+              <Box 
+                sx={{ 
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'repeat(2, 1fr)',
+                    lg: 'repeat(3, 1fr)'
+                  },
+                  gap: 2
+                }}
+              >
+                {subjectSubtopics[subject]?.map((topic) => (
+                  <motion.div
+                    key={topic}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ width: '100%' }}
+                  >
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={() => handleSubtopicSelection(topic)}
+                      sx={{
+                        p: 2,
+                        height: 'auto',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderRadius: 2,
+                        borderColor: subtopic === topic ? 'primary.main' : 'divider',
+                        borderWidth: subtopic === topic ? 2 : 1,
+                        backdropFilter: 'blur(10px)',
+                        backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(30,30,30,0.6)' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(40,40,40,0.7)' : 'rgba(245,245,245,0.9)',
+                          boxShadow: theme => `0 0 8px ${theme.palette.primary.main}`
+                        }
+                      }}
+                    >
+                      <Typography sx={{ color: 'text.primary', fontWeight: 500 }}>{topic}</Typography>
+                      <BookOpen className="ml-1 text-primary" style={{ fontSize: 20 }} />
+                    </Button>
+                  </motion.div>
+                ))}
+              </Box>
+            </Box>
+          )}
+          
+          {subject && subtopic && !quizStarted && !quizCompleted && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Button
+                  variant="text"
+                  onClick={() => setSubtopic(null)}
+                  sx={{ 
+                    textTransform: 'none',
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' }
+                  }}
+                >
+                  ← Back to Topics
+                </Button>
+              </Box>
+              
               <Typography 
                 variant="h5" 
                 sx={{ 
@@ -442,7 +541,7 @@ const MCQQuiz = () => {
                 Ready to Start
               </Typography>
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                You have selected <Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>{subject}</Box>. 
+                You have selected <Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>{subject} - {subtopic}</Box>. 
                 This quiz will test your knowledge with AI-generated multiple-choice questions.
               </Typography>
               
@@ -519,7 +618,7 @@ const MCQQuiz = () => {
                 justifyContent: 'space-between', 
                 alignItems: 'center'
               }}>
-                <Typography variant="h6" fontWeight={500} color="text.primary">{subject} Quiz</Typography>
+                <Typography variant="h6" fontWeight={500} color="text.primary">{subject} - {subtopic} Quiz</Typography>
                 <Typography variant="body2" fontWeight={500} color="text.secondary">
                   Question {currentQuestionIdx + 1} of {questions.length}
                 </Typography>
@@ -635,7 +734,7 @@ const MCQQuiz = () => {
                 <Box sx={{ width: '100%', maxWidth: 500, mx: 'auto', mb: 4 }}>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart
-                      data={progressData.filter(p => p.subject === subject).map(p => ({
+                      data={progressData.filter(p => p.subject === `${subject} - ${subtopic}`).map(p => ({
                         name: p.subject,
                         Correct: p.correct_answers,
                         Incorrect: p.total_questions_answered - p.correct_answers
@@ -797,6 +896,7 @@ const MCQQuiz = () => {
                   color="primary"
                   onClick={() => {
                     setSubject(null);
+                    setSubtopic(null);
                     setQuizCompleted(false);
                   }}
                   sx={{
@@ -823,7 +923,7 @@ const MCQQuiz = () => {
                     }
                   }}
                 >
-                  Retry {subject} Quiz
+                  Retry {subject} - {subtopic} Quiz
                 </Button>
                 <Button
                   variant="outlined"
@@ -841,7 +941,7 @@ const MCQQuiz = () => {
             </Box>
           )}
 
-          {!quizStarted && subject && score.total > 0 && !quizCompleted && (
+          {!quizStarted && subject && subtopic && score.total > 0 && !quizCompleted && (
             <Paper
               elevation={0}
               sx={{
@@ -861,7 +961,10 @@ const MCQQuiz = () => {
                 <Button 
                   variant="outlined"
                   color="primary"
-                  onClick={() => setSubject(null)}
+                  onClick={() => {
+                    setSubject(null);
+                    setSubtopic(null);
+                  }}
                   sx={{
                     textTransform: 'none',
                     borderColor: theme.palette.mode === 'dark' ? 'divider' : theme.palette.primary.main,
